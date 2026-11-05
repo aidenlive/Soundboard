@@ -1,0 +1,75 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  engine:
+    name: Engine (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        run: |
+          cmake -S engine -B engine/build -DCMAKE_BUILD_TYPE=Release
+          cmake --build engine/build -j 4
+      - name: Test
+        run: ctest --test-dir engine/build --output-on-failure
+      - name: Routing prototype
+        run: |
+          mkdir -p out
+          engine/build/sbe_routing_demo out
+
+  engine-sanitizers:
+    name: Engine (ASan + UBSan, TSan)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: ASan + UBSan
+        run: |
+          cmake -S engine -B build-asan -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer -fno-sanitize-recover=all"
+          cmake --build build-asan -j 4
+          ./build-asan/sbe_tests
+      - name: TSan (threading test)
+        run: |
+          cmake -S engine -B build-tsan -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_CXX_FLAGS="-fsanitize=thread"
+          cmake --build build-tsan -j 4
+          ./build-tsan/sbe_tests concurrent
+
+  apple:
+    name: Apple (Swift package, macOS + iOS)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Swift build + test (macOS)
+        run: swift test
+      - name: Build for iOS
+        run: xcodebuild -scheme SoundboardAudio -destination 'generic/platform=iOS' -skipPackagePluginValidation build CODE_SIGNING_ALLOWED=NO | tail -n 40; exit ${PIPESTATUS[0]}
+      - name: Build Routing Lab (iOS + macOS)
+        run: |
+          brew install xcodegen
+          cd platforms/apple && xcodegen
+          xcodebuild -project RoutingLab.xcodeproj -scheme RoutingLab -destination 'generic/platform=iOS' build CODE_SIGNING_ALLOWED=NO | tail -n 40; test ${PIPESTATUS[0]} -eq 0
+          xcodebuild -project RoutingLab.xcodeproj -scheme RoutingLab -destination 'platform=macOS' build CODE_SIGNING_ALLOWED=NO | tail -n 40; test ${PIPESTATUS[0]} -eq 0
+
+  android:
+    name: Android (unit tests + debug APK)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.11.1"
+      - name: Test + assemble
+        working-directory: platforms/android
+        run: gradle --no-daemon :app:testDebugUnitTest :app:assembleDebug
