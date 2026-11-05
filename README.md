@@ -34,7 +34,7 @@ automatic phrase-aligned transitions.
 ## Build & test
 
 ```bash
-# Engine (Linux/macOS/Windows): tests + routing prototype
+# Engine (Linux/macOS/Windows): tests + routing prototype  (macOS: brew install cmake)
 cmake -S engine -B engine/build -DCMAKE_BUILD_TYPE=Release
 cmake --build engine/build -j
 ctest --test-dir engine/build --output-on-failure
