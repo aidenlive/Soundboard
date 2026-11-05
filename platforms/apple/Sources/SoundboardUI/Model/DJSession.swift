@@ -94,26 +94,53 @@ public final class DJSession {
     #if os(iOS)
     @ObservationIgnored private let session = AudioSessionController()
     #endif
+    @ObservationIgnored private var starting = false
 
     public init() {}
 
     // MARK: Lifecycle
 
     public func start() {
-        guard host == nil else { return }
+        guard host == nil, !starting else { return }
         #if os(iOS)
+        starting = true
+        session.onRouteChange = { [weak self] _ in
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                await self.activateSession()
+                self.replan()
+            }
+        }
+        session.onMediaServicesReset = { [weak self] in
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                await self.activateSession()
+                self.rebuildEngine()
+            }
+        }
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            await self.activateSession()
+            self.starting = false
+            self.finishStart()
+        }
+        #else
+        finishStart()
+        #endif
+    }
+
+    #if os(iOS)
+    private func activateSession() async {
+        let ports = AVAudioSession.sharedInstance().currentRoute.outputs
         do {
-            try session.activate(preferMultiRoute: AudioSessionController.multiRouteCandidate(AVAudioSession.sharedInstance().currentRoute.outputs))
+            try await session.activate(preferMultiRoute: AudioSessionController.multiRouteCandidate(ports))
         } catch {
             errorMessage = "Audio session: \(error.localizedDescription)"
         }
-        session.onRouteChange = { [weak self] _ in
-            guard let self else { return }
-            try? self.session.activate(preferMultiRoute: AudioSessionController.multiRouteCandidate(AVAudioSession.sharedInstance().currentRoute.outputs))
-            self.replan()
-        }
-        session.onMediaServicesReset = { [weak self] in self?.rebuildEngine() }
-        #endif
+    }
+    #endif
+
+    private func finishStart() {
         rebuildEngine()
         timer = Timer.scheduledTimer(withTimeInterval: 1.0 / 60.0, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated { self?.poll() }

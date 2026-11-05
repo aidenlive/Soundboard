@@ -30,29 +30,46 @@ final class RoutingLabModel {
     #endif
 
     func start() {
-        do {
-            #if os(iOS)
-            try activateSession()
-            session.onRouteChange = { [weak self] _ in
-                // Multi-route drops Bluetooth/AirPlay, so choose the category per route.
-                try? self?.activateSession()
+        #if os(iOS)
+        session.onRouteChange = { [weak self] _ in
+            // Multi-route drops Bluetooth/AirPlay, so choose the category per route.
+            Task { @MainActor [weak self] in
+                await self?.activateSession()
                 self?.replan()
             }
-            session.onMediaServicesReset = { [weak self] in self?.rebuild() }
-            #endif
-            rebuild()
-        } catch {
-            errorMessage = error.localizedDescription
         }
+        session.onMediaServicesReset = { [weak self] in
+            Task { @MainActor [weak self] in
+                await self?.activateSession()
+                self?.rebuild()
+            }
+        }
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            await self.activateSession()
+            self.rebuild()
+            self.startTimer()
+        }
+        #else
+        rebuild()
+        startTimer()
+        #endif
+    }
+
+    private func startTimer() {
         timer = Timer.scheduledTimer(withTimeInterval: 1.0 / 30.0, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated { self?.poll() }
         }
     }
 
     #if os(iOS)
-    private func activateSession() throws {
+    private func activateSession() async {
         let ports = AVAudioSession.sharedInstance().currentRoute.outputs
-        try session.activate(preferMultiRoute: AudioSessionController.multiRouteCandidate(ports))
+        do {
+            try await session.activate(preferMultiRoute: AudioSessionController.multiRouteCandidate(ports))
+        } catch {
+            errorMessage = error.localizedDescription
+        }
     }
     #endif
 

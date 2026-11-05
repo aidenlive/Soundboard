@@ -24,18 +24,27 @@ public final class AudioSessionController {
     public init() {}
 
     /// Configure for low-latency playback. `multiRoute` is used only when a second output exists.
+    ///
+    /// `setActive(true)` blocks while the audio server reconfigures, and Apple warns against calling
+    /// it on the main thread, so the session work runs on a background task and this awaits it.
     public func activate(preferMultiRoute: Bool, preferredSampleRate: Double = 48_000,
-                         preferredBuffer: TimeInterval = 0.005) throws {
-        let category: AVAudioSession.Category = preferMultiRoute ? .multiRoute : .playback
-        try session.setCategory(category, mode: .default, options: [])
-        try session.setPreferredSampleRate(preferredSampleRate)
-        try session.setPreferredIOBufferDuration(preferredBuffer)
-        try session.setActive(true)
-        // Ask for every channel the route offers (e.g. 4 on a DJ controller).
-        let maxChannels = session.maximumOutputNumberOfChannels
-        if maxChannels > session.outputNumberOfChannels {
-            try? session.setPreferredOutputNumberOfChannels(maxChannels)
-        }
+                         preferredBuffer: TimeInterval = 0.005) async throws {
+        let category = (preferMultiRoute ? AVAudioSession.Category.multiRoute : .playback).rawValue
+        try await Task.detached(priority: .userInitiated) {
+            let session = AVAudioSession.sharedInstance()
+            let wanted = AVAudioSession.Category(rawValue: category)
+            if session.category != wanted {
+                try session.setCategory(wanted, mode: .default, options: [])
+            }
+            try session.setPreferredSampleRate(preferredSampleRate)
+            try session.setPreferredIOBufferDuration(preferredBuffer)
+            try session.setActive(true)
+            // Ask for every channel the route offers (e.g. 4 on a DJ controller).
+            let maxChannels = session.maximumOutputNumberOfChannels
+            if maxChannels > session.outputNumberOfChannels {
+                try? session.setPreferredOutputNumberOfChannels(maxChannels)
+            }
+        }.value
         refreshOutputs()
         installObservers()
     }
@@ -85,9 +94,14 @@ public final class AudioSessionController {
         guard observers.isEmpty else { return }
         let center = NotificationCenter.default
         observers.append(center.addObserver(forName: AVAudioSession.routeChangeNotification, object: session,
-                                            queue: .main) { [weak self] _ in
+                                            queue: .main) { [weak self] note in
+            let reason = (note.userInfo?[AVAudioSessionRouteChangeReasonKey] as? UInt)
+                .flatMap(AVAudioSession.RouteChangeReason.init(rawValue:))
             MainActor.assumeIsolated {
                 guard let self else { return }
+                // A category change is caused by activate() itself; reporting it would make the
+                // owner re-activate, change category again and loop.
+                if reason == .categoryChange { self.refreshOutputs(); return }
                 // Route changes can invalidate a multi-route channel map: always re-plan.
                 self.refreshOutputs()
                 self.onRouteChange?(self.outputs)
