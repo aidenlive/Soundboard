@@ -57,3 +57,7 @@ Phase 0 (audio foundation) is complete. The engine passes 24 tests under Address
 UndefinedBehaviorSanitizer and ThreadSanitizer. The routing prototype confirms that headphone
 activity leaves the master **bit-identical**. Next is the on-device validation matrix in
 [`docs/roadmap.md`](docs/roadmap.md), then the Level 1–2 app.
+
+The Swift package and the Android app have been code-reviewed but not yet compiled. GitHub Actions
+(`.github/workflows/ci.yml`) builds and tests both, along with the engine on Linux and macOS, as soon
+as Actions can run on this account.

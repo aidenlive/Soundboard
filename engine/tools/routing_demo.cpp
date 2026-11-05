@@ -50,6 +50,7 @@ Render runSession(Topology topo, TrackRef a, TrackRef b, double seconds, bool dj
     Engine e(kSR, kBlock, 2);
     OutputLayout layout;
     layout.topology = topo;
+    if (topo == Topology::SplitMono) { layout.masterLeft = layout.masterRight = 0; layout.cueLeft = layout.cueRight = 1; }
     e.setOutputLayout(layout);
     e.loadTrack(0, a);
     e.loadTrack(1, b);

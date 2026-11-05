@@ -48,6 +48,8 @@ public final class AudioSessionController {
     public func refreshOutputs() {
         var firstChannel = 0
         var result: [OutputPort] = []
+        // iOS reports one latency for the whole route, not per port, so multi-route latency
+        // alignment needs a measured calibration (Phase 3 loopback wizard).
         let routeLatency = session.outputLatency + session.ioBufferDuration
         for port in session.currentRoute.outputs {
             let channels = port.channels?.count ?? 2
@@ -66,13 +68,13 @@ public final class AudioSessionController {
 
     static func kind(of type: AVAudioSession.Port) -> OutputPort.Kind {
         switch type {
-        case .builtInSpeaker, .builtInReceiver: .builtInSpeaker
+        case .builtInSpeaker: .builtInSpeaker
         case .headphones: .wiredHeadphones
         case .usbAudio: .usbAudio
         case .lineOut: .lineOut
         case .HDMI, .displayPort: .hdmi
         case .bluetoothA2DP: .bluetoothA2DP
-        case .bluetoothLE, .bluetoothHFP: .bluetoothLE
+        case .bluetoothLE: .bluetoothLE
         case .airPlay: .airPlay
         case .carAudio: .carAudio
         default: .other

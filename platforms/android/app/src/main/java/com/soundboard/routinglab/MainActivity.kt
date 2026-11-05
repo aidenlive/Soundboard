@@ -76,8 +76,8 @@ class LabViewModel(app: Application) : AndroidViewModel(app) {
         engine.setCrossfader(-1f)
         engine.setCue(1, true)
         engine.setCueMix(0f)
+        // Registering the callback reports the current devices immediately, which runs the first plan.
         scanner.watch { replan() }
-        replan()
         viewModelScope.launch {
             while (isActive) {
                 val s = engine.status()

@@ -16,7 +16,7 @@ data class OutputPort(
         BLUETOOTH_A2DP, BLUETOOTH_LE, CAST, OTHER;
 
         val isWireless get() = this == BLUETOOTH_A2DP || this == BLUETOOTH_LE || this == CAST
-        val isVenueOutput get() = this in setOf(USB_AUDIO, LINE_OUT, HDMI, BUILT_IN_SPEAKER, BLUETOOTH_A2DP, BLUETOOTH_LE, CAST)
+        val isVenueOutput get() = this != WIRED_HEADPHONES && this != OTHER
     }
 }
 
@@ -70,7 +70,7 @@ object RoutePlanner {
         fun pick(id: Int?) = id?.let { wanted -> outputs.firstOrNull { it.id == wanted } }
 
         val multi = pick(preferredMasterId)?.takeIf { it.channels >= 4 }
-            ?: outputs.filter { it.channels >= 4 && !it.kind.isWireless }.maxByOrNull { it.channels }
+            ?: outputs.filter { it.channels >= 4 && !it.kind.isWireless && it.kind != OutputPort.Kind.OTHER }.maxByOrNull { it.channels }
         if (multi != null) {
             return RoutePlan(CueTopology.MULTI_CHANNEL, multi, multi, intArrayOf(0, 1, 2, 3), 0.0, 0.0, notices)
         }

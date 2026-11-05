@@ -27,7 +27,9 @@ public enum CoreAudioDevices {
         else { return [] }
         return ids.compactMap { id in
             let channels = outputChannelCount(id)
-            guard channels > 0 else { return nil }
+            // Skip virtual/aggregate-by-app devices (BlackHole, Loopback, conferencing drivers):
+            // they often report 16+ channels and would be mistaken for a DJ interface.
+            guard channels > 0, transportType(id) != kAudioDeviceTransportTypeVirtual else { return nil }
             let port = OutputPort(id: uid(id) ?? "\(id)", name: name(id) ?? "Device \(id)",
                                   kind: kind(id), channels: channels, latency: outputLatency(id))
             return Device(id: id, port: port)
@@ -74,10 +76,14 @@ public enum CoreAudioDevices {
         return Double(device + safety + buffer) / rate
     }
 
-    static func kind(_ id: AudioDeviceID) -> OutputPort.Kind {
+    static func transportType(_ id: AudioDeviceID) -> UInt32 {
         var transport: UInt32 = 0
         _ = get(id, kAudioDevicePropertyTransportType, kAudioObjectPropertyScopeGlobal, &transport)
-        switch transport {
+        return transport
+    }
+
+    static func kind(_ id: AudioDeviceID) -> OutputPort.Kind {
+        switch transportType(id) {
         case kAudioDeviceTransportTypeUSB: return .usbAudio
         case kAudioDeviceTransportTypeBluetooth: return .bluetoothA2DP
         case kAudioDeviceTransportTypeBluetoothLE: return .bluetoothLE

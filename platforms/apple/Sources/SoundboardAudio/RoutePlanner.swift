@@ -100,7 +100,7 @@ public enum RoutePlanner {
 
         // 1. Multichannel interface.
         if let multi = pick(preferredMasterID).flatMap({ $0.channels >= 4 ? $0 : nil })
-            ?? outputs.filter({ $0.channels >= 4 && !$0.kind.isWireless }).max(by: { $0.channels < $1.channels }) {
+            ?? outputs.filter({ $0.channels >= 4 && !$0.kind.isWireless && $0.kind != .other }).max(by: { $0.channels < $1.channels }) {
             let base = multi.firstChannel
             return RoutePlan(topology: .multiChannel, masterPort: multi, cuePort: multi,
                              masterChannels: (base, base + 1), cueChannels: (base + 2, base + 3),

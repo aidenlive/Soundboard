@@ -236,7 +236,7 @@ TEST(cue_never_leaks_into_master_multichannel) {
 
 TEST(split_mono_topology_and_preview_isolation) {
     Engine e(kSR, kBlock);
-    e.setOutputLayout({Topology::SplitMono});
+    e.setOutputLayout({Topology::SplitMono, 0, 0, 1, 1});
     e.setAutoGain(false);
     e.loadTrack(0, withGrid(synth::makeSine(330.0, 10, kSR), 120, 0));
     e.play(0);

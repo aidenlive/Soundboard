@@ -30,7 +30,9 @@ namespace {
 constexpr int kMaxChannels = 8;
 constexpr int kMaxFrames = 4096;
 
-class StreamDriver : public oboe::AudioStreamDataCallback, public oboe::AudioStreamErrorCallback {
+class StreamDriver : public oboe::AudioStreamDataCallback,
+                     public oboe::AudioStreamErrorCallback,
+                     public std::enable_shared_from_this<StreamDriver> {
 public:
     StreamDriver(sbe_engine* engine, bool isCue) : engine_(engine), isCue_(isCue) {
         for (auto& ch : planar_) ch.assign(kMaxFrames, 0.0f);
@@ -51,8 +53,9 @@ public:
             ->setSampleRateConversionQuality(oboe::SampleRateConversionQuality::Medium)
             ->setUsage(oboe::Usage::Media)
             ->setContentType(oboe::ContentType::Music)
-            ->setDataCallback(this)
-            ->setErrorCallback(this);
+            // shared_ptr callbacks keep this object alive while Oboe's disconnect thread runs.
+            ->setDataCallback(shared_from_this())
+            ->setErrorCallback(shared_from_this());
         if (deviceId > 0) b.setDeviceId(deviceId);
         oboe::Result r = b.openStream(stream_);
         if (r != oboe::Result::OK) return r;
@@ -82,14 +85,18 @@ public:
 
     oboe::DataCallbackResult onAudioReady(oboe::AudioStream* s, void* audio, int32_t frames) override {
         float* out = static_cast<float*>(audio);
-        const int nch = s->getChannelCount();
+        const int streamChannels = s->getChannelCount();
+        const int nch = std::min(streamChannels, kMaxChannels);
         int done = 0;
         while (done < frames) {
             const int n = std::min(kMaxFrames, frames - done);
             if (isCue_) sbe_engine_render_cue(engine_, ptrs_, nch, n);
             else sbe_engine_render(engine_, ptrs_, nch, n);
-            for (int i = 0; i < n; ++i)
-                for (int c = 0; c < nch; ++c) out[(done + i) * nch + c] = ptrs_[c][i];
+            for (int i = 0; i < n; ++i) {
+                float* frame = out + (done + i) * streamChannels;
+                for (int c = 0; c < nch; ++c) frame[c] = ptrs_[c][i];
+                for (int c = nch; c < streamChannels; ++c) frame[c] = 0.0f;
+            }
             done += n;
         }
         return oboe::DataCallbackResult::Continue;
@@ -114,7 +121,7 @@ private:
 struct Host {
     sbe_engine* engine = nullptr;
     double sampleRate = 48000;
-    std::unique_ptr<StreamDriver> master, cue;
+    std::shared_ptr<StreamDriver> master, cue;
     std::mutex mutex;
 };
 
@@ -129,6 +136,7 @@ JNIEXPORT jlong JNICALL Java_com_soundboard_audio_NativeEngine_nativeCreate(JNIE
     auto* h = new Host();
     h->sampleRate = sampleRate;
     h->engine = sbe_engine_create(sampleRate, maxBlock, decks);
+    if (!h->engine) { delete h; return 0; }
     return reinterpret_cast<jlong>(h);
 }
 
@@ -153,13 +161,13 @@ JNIEXPORT jint JNICALL Java_com_soundboard_audio_NativeEngine_nativeStart(JNIEnv
     if (x->cue) x->cue->close();
     if (x->master) x->master->close();
     x->cue.reset();
-    x->master = std::make_unique<StreamDriver>(x->engine, false);
+    x->master = std::make_shared<StreamDriver>(x->engine, false);
     if (x->master->open(masterDevice, masterChannels, int(x->sampleRate)) != oboe::Result::OK) return 1;
 
     int result = 0;
     int topo = topology;
     if (topo == SBE_TOPOLOGY_SEPARATE_CUE_DEVICE) {
-        x->cue = std::make_unique<StreamDriver>(x->engine, true);
+        x->cue = std::make_shared<StreamDriver>(x->engine, true);
         const bool opened = x->cue->open(cueDevice, 2, int(x->sampleRate)) == oboe::Result::OK;
         if (!opened || x->cue->actualDeviceId() != cueDevice || x->master->actualDeviceId() == x->cue->actualDeviceId()) {
             LOGW("concurrent cue device refused or re-routed (asked %d, got %d): cue disabled", cueDevice,

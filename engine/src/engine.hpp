@@ -39,7 +39,7 @@ enum class Topology : int {
 struct OutputLayout {
     Topology topology = Topology::MasterOnly;
     int masterLeft = 0, masterRight = 1;
-    int cueLeft = 2, cueRight = 3;
+    int cueLeft = 2, cueRight = 3;  // SplitMono uses masterLeft and cueLeft only
 };
 
 enum class XfAssign : int { Thru = 0, A = 1, B = 2 };

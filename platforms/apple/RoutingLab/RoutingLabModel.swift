@@ -1,5 +1,8 @@
 import Foundation
 import Observation
+#if os(iOS)
+import AVFAudio
+#endif
 import SoundboardAudio
 import SoundboardEngine
 
@@ -30,8 +33,12 @@ final class RoutingLabModel {
     func start() {
         do {
             #if os(iOS)
-            try session.activate(preferMultiRoute: true)
-            session.onRouteChange = { [weak self] _ in self?.replan() }
+            try activateSession()
+            session.onRouteChange = { [weak self] _ in
+                // Multi-route drops Bluetooth/AirPlay, so choose the category per route.
+                try? self?.activateSession()
+                self?.replan()
+            }
             session.onMediaServicesReset = { [weak self] in self?.rebuild() }
             #endif
             rebuild()
@@ -42,6 +49,13 @@ final class RoutingLabModel {
             MainActor.assumeIsolated { self?.poll() }
         }
     }
+
+    #if os(iOS)
+    private func activateSession() throws {
+        let ports = AVAudioSession.sharedInstance().currentRoute.outputs
+        try session.activate(preferMultiRoute: AudioSessionController.multiRouteCandidate(ports))
+    }
+    #endif
 
     func rebuild() {
         #if os(iOS)

@@ -609,8 +609,11 @@ void Engine::render(float* const* out, int nch, int frames) {
                 if (layout_.topology == Topology::SeparateCueDevice) cueFifo_.push(cL_.data(), cR_.data(), n);
                 break;
             case Topology::SplitMono:
-                for (int i = 0; i < n; ++i) out[0][offset + i] = 0.5f * (mL_[i] + mR_[i]);
-                if (nch > 1) for (int i = 0; i < n; ++i) out[1][offset + i] = 0.5f * (cL_[i] + cR_[i]);
+                // Mono master on masterLeft, mono cue on cueLeft (e.g. 0 and 1 of a headphone jack,
+                // or the headphone port's channels inside an iOS multi-route aggregate).
+                for (int i = 0; i < n; ++i) { mL_[i] = 0.5f * (mL_[i] + mR_[i]); cL_[i] = 0.5f * (cL_[i] + cR_[i]); }
+                put(layout_.masterLeft, mL_.data());
+                put(layout_.cueLeft, cL_.data());
                 break;
             case Topology::MultiChannel:
                 put(layout_.masterLeft, mL_.data());

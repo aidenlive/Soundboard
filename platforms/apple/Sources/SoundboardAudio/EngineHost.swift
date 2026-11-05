@@ -1,7 +1,7 @@
 import AudioToolbox
 import AVFAudio
 import Foundation
-import SoundboardEngine
+@_exported import SoundboardEngine
 
 /// Connects the shared C++ engine to Apple audio hardware.
 ///
@@ -98,24 +98,24 @@ final class OutputUnit {
         let desc = AudioComponentDescription(componentType: kAudioUnitType_Output, componentSubType: subtype,
                                              componentManufacturer: kAudioUnitManufacturer_Apple,
                                              componentFlags: 0, componentFlagsMask: 0)
-        unit = try AUAudioUnit(componentDescription: desc)
+        // Configure a local first: `self` may not be touched until every stored property is set.
+        let au = try AUAudioUnit(componentDescription: desc)
         #if os(macOS)
-        if let deviceID { try unit.setDeviceID(deviceID) }
+        if let deviceID { try au.setDeviceID(deviceID) }
         #endif
         let count = min(channels, Self.maxChannels)
         guard let layout = AVAudioChannelLayout(layoutTag: kAudioChannelLayoutTag_DiscreteInOrder | UInt32(count)) else {
             throw NSError(domain: "Soundboard", code: 1, userInfo: [NSLocalizedDescriptionKey: "channel layout"])
         }
         let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channelLayout: layout)
-        try unit.inputBusses[0].setFormat(format)
-        unit.maximumFramesToRender = 4096
+        try au.inputBusses[0].setFormat(format)
+        au.maximumFramesToRender = 4096
 
         let ptrs = UnsafeMutablePointer<UnsafeMutablePointer<Float>?>.allocate(capacity: Self.maxChannels)
         ptrs.initialize(repeating: nil, count: Self.maxChannels)
-        channelPointers = ptrs
         let maxCh = Self.maxChannels
         // Real-time block: no allocation, no locks, no Objective-C messaging — pointer setup + C call.
-        unit.outputProvider = { _, _, frameCount, _, bufferList in
+        au.outputProvider = { _, _, frameCount, _, bufferList in
             let list = UnsafeMutableAudioBufferListPointer(bufferList)
             let n = min(list.count, maxCh)
             for i in 0..<n {
@@ -126,9 +126,17 @@ final class OutputUnit {
                 ptrs[i] = data.assumingMemoryBound(to: Float.self)
             }
             render(UnsafePointer(ptrs), Int32(n), Int32(frameCount))
+            for j in n..<list.count { if let d = list[j].mData { memset(d, 0, Int(list[j].mDataByteSize)) } }
             return noErr
         }
-        try unit.allocateRenderResources()
+        do {
+            try au.allocateRenderResources()
+        } catch {
+            ptrs.deallocate()
+            throw error
+        }
+        unit = au
+        channelPointers = ptrs
     }
 
     func start() throws { try unit.startHardware() }
