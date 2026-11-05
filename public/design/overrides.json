@@ -1,0 +1,17 @@
+{
+  "$description": "Soundboard's product roles on top of the Obsidian system: brand mark and Pulse colours, and the docs site's layout widths. Colours are references, never raw values. Read by design/tokens/generate.py into tokens.css and tokens.json.",
+  "colors": {
+    "color-mark-master": "{color-text}",
+    "color-mark-cue": "{lime.500}",
+    "color-pulse": "{lime.500}",
+    "color-pulse-rest": "{color-text-muted}"
+  },
+  "layout": {
+    "frame-max": 1200,
+    "measure": 760,
+    "sidebar": 232,
+    "toc": 200,
+    "hero-mark": 260,
+    "mark": 24
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "system": "obsidian-system",
+  "source": "design/tokens/obsidian.tokens.json",
+  "brand": "soundboard-brand",
+  "brandSource": "brand/",
+  "overrides": "overrides.json",
+  "outputs": ["DESIGN.md", "tokens.json", "tokens.css", "platforms/apple/Sources/SoundboardUI/Design/ObsidianTokens.generated.swift"],
+  "generator": "design/tokens/generate.py"
+}

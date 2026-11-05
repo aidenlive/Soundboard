@@ -21,3 +21,7 @@ platforms/android/local.properties
 # XcodeGen writes these from project.yml
 platforms/apple/App/Info.plist
 platforms/apple/RoutingLab/Info.plist
+
+# make dist, make demo, make shots
+dist/
+out/

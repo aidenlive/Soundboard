@@ -1,0 +1,17 @@
+{
+  "id": "soundboard",
+  "name": "Soundboard",
+  "purpose": "A DJ app for iPhone, Android and Mac with a separate headphone cue, simple enough to mix two tracks in seconds and deep enough to play a full set.",
+  "version": "0.1.0",
+  "status": "draft",
+  "organization": "aidenlive",
+  "role": "dj-app",
+  "tier": "internal",
+  "landing": "https://github.com/aidenlive/Soundboard",
+  "sponsor": null,
+  "screenshot": "public/index.html",
+  "kept": [
+    "public/design/DESIGN.md",
+    "platforms/apple/Sources/SoundboardUI/Resources/Fonts/Geist-OFL.txt"
+  ]
+}
