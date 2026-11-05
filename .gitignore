@@ -1,0 +1,19 @@
+# Engine
+engine/build*/
+# Apple
+.build/
+.swiftpm/
+*.xcodeproj
+xcuserdata/
+DerivedData/
+# Android
+platforms/android/.gradle/
+platforms/android/build/
+platforms/android/app/build/
+platforms/android/app/.cxx/
+platforms/android/local.properties
+*.iml
+.idea/
+# Misc
+.DS_Store
+*.wav
