@@ -64,6 +64,8 @@ struct Engine::Transition {
     double total = 1, elapsed = 0, beatFrames = 1;
     bool useCrossfader = false, swapped = false, echoCut = false;
     float xfStart = 0, xfEnd = 0, fromGain0 = 1, toGainTarget = 1;
+    double waitUntilBeat = -1;  // outgoing deck's beat at which the blend starts
+    bool begun = false;
 };
 
 struct Engine::DeckAtomics {
@@ -205,8 +207,8 @@ void Engine::previewPlay() { SBE_SEND(c.op = Op::PreviewPlay); }
 void Engine::previewStop() { SBE_SEND(c.op = Op::PreviewStop); }
 void Engine::setPreviewGain(float db) { SBE_SEND(c.op = Op::PreviewGain; c.a = db); }
 
-void Engine::startTransition(int from, int to, double beats, TransitionStyle s) {
-    SBE_SEND(c.op = Op::TransitionStart; c.deck = from; c.i = to; c.a = beats; c.b = double(int(s)));
+void Engine::startTransition(int from, int to, double beats, TransitionStyle s, int phraseBeats) {
+    SBE_SEND(c.op = Op::TransitionStart; c.deck = from; c.i = to; c.a = beats; c.b = double(int(s)); c.c = phraseBeats);
 }
 void Engine::cancelTransition() { SBE_SEND(c.op = Op::TransitionCancel); }
 void Engine::setRecording(bool on) { SBE_SEND(c.op = Op::Record; c.i = on); }
@@ -243,6 +245,7 @@ EngineStatus Engine::status() const {
     s.masterPeak = aMasterPeak_.load(r); s.cuePeak = aCuePeak_.load(r);
     s.limiterReductionDb = aLimiter_.load(r); s.crossfader = aCrossfader_.load(r);
     s.transitionProgress = aTransition_.load(r); s.cueAvailable = aCueAvailable_.load(r);
+    s.transitionStartsInBeats = aTransitionWait_.load(r);
     s.cueUnderruns = cueFifo_.underruns(); s.recordedFrames = recordedFrames_.load(r);
     s.recordDropped = recordDropped_.load(r); s.cueDriftRatio = aCueRatio_.load(r);
     return s;
@@ -350,13 +353,15 @@ void Engine::applyCommand(const Command& c) {
             t.xfEnd = sto.assign == XfAssign::A ? -1.0f : 1.0f;
             t.fromGain0 = sf.fader.target();
             t.toGainTarget = 1.0f;
+            // The incoming deck stays inaudible until the blend begins.
             if (!t.useCrossfader) sto.setFaderGain(0.0f);
             else sto.setFaderGain(1.0f);
             if (t.style == TransitionStyle::BassSwap) sto.setEq(0, -96.0f);
-            if (t.style == TransitionStyle::EchoOut) {
-                sf.echoBeats = 0.75;
-                sf.echo.setFeedback(0.6f);
-                sf.echo.setWet(0.7f);
+            const int phrase = int(c.c);
+            if (phrase > 0 && decks_[from].playing()) {
+                const double b = decks_[from].beatPosition();
+                t.waitUntilBeat = std::ceil(b / phrase - 1e-9) * phrase;
+                if (t.waitUntilBeat - b < 0.05) t.waitUntilBeat += phrase;  // too close: next phrase
             }
             if (!decks_[to].playing()) {
                 // Match tempo and phase to the outgoing deck, keep it locked during the blend.
@@ -369,6 +374,7 @@ void Engine::applyCommand(const Command& c) {
         case Op::TransitionCancel:
             transition_->active = false;
             aTransition_.store(-1.0f);
+            aTransitionWait_.store(-1.0f);
             break;
         case Op::Record: recording_ = c.i != 0; break;
     }
@@ -438,6 +444,24 @@ void Engine::updateSyncLocks(int n) {
 void Engine::updateTransition(int n) {
     Transition& t = *transition_;
     if (!t.active) return;
+    if (t.waitUntilBeat >= 0) {
+        const double b = decks_[t.from].beatPosition();
+        if (b < t.waitUntilBeat) {
+            aTransitionWait_.store(float(t.waitUntilBeat - b), std::memory_order_relaxed);
+            return;
+        }
+        t.waitUntilBeat = -1;
+    }
+    aTransitionWait_.store(-1.0f, std::memory_order_relaxed);
+    if (!t.begun) {
+        t.begun = true;
+        if (t.style == TransitionStyle::EchoOut) {
+            Strip& sfe = *strips_[t.from];
+            sfe.echoBeats = 0.75;
+            sfe.echo.setFeedback(0.6f);
+            sfe.echo.setWet(0.7f);
+        }
+    }
     t.elapsed += n;
     const float p = float(std::min(1.0, t.elapsed / t.total));
     Strip& sf = *strips_[t.from];

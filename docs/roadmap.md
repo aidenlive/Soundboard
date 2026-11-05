@@ -22,12 +22,30 @@ confirm by ear + meters that the cue chirp never reaches the speakers, with no g
 
 Record callback timing (p99 render time), xruns, actual buffer sizes and reported latencies per row.
 
-## Phase 1 — Playable two-deck app (Levels 1–2)
+## Phase 1 — Playable two-deck app (Levels 1–2) · in progress
 
-- Library: local files (Files / MediaStore / Finder), background analysis queue, content-hash identity.
-- Decoders: AVAudioFile; Android MediaExtractor + MediaCodec.
-- Quick Control and Mix layouts; Mix button; Up Next suggestions; preview in headphones.
-- Waveform renderer (Metal / Compose Canvas or Vulkan) at 120 Hz on capable displays.
+Done (Apple first; Android follows on the same engine and tokens):
+- Token pipeline: `design/tokens/generate.py` turns the OKLCH JSON into Swift data. The
+  `SemanticPalette` resolver applies Appearance at runtime. Tests cover every theme, accent and
+  waveform combination, WCAG contrast, JSON↔Swift parity, and the Custom waveform guardrails.
+- `SoundboardUI` (Swift package):
+  - Obsidian components: Linear, Radial and Lanes deck views, overview strip, arc knobs,
+    segmented controls, fader, level meter, Split mark, Pulse.
+  - Bundled Geist fonts (OFL).
+- `DJSession`: engine, routing, library import and analysis, Up Next ranking (`TrackMatcher`),
+  phrase-quantised Mix, hot cues, sync, headphone preview.
+- Screens: Quick (portrait), Mix (landscape, iPad, Mac), Library, Settings › Appearance and
+  Waveform colours.
+- Engine: phrase-quantised transitions (`sbe_transition_start_on_phrase`) and cached auto-gain
+  (`sbe_track_set_auto_gain`).
+
+Still to do in Phase 1:
+
+- Library persistence (it is in-memory today): content-hash identity, analysis cache, a bounded
+  background analysis queue.
+- Android: MediaExtractor + MediaCodec decoding, Compose screens on the same tokens (generator
+  Kotlin output).
+- Measure SwiftUI `Canvas` waveform performance on device; move to Metal if it misses 120 Hz.
 - Session persistence; crash/interruption recovery.
 
 **Exit:** usability test — 10 first-time users each complete a transition within 60 s unaided.

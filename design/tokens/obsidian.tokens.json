@@ -197,27 +197,32 @@
       "volt": {
         "color-primary": "{lime.500}",
         "color-primary-hover": "{lime.600}",
-        "color-primary-active": "{lime.700}"
+        "color-primary-active": "{lime.700}",
+        "family": "lime"
       },
       "signal": {
         "color-primary": "{pink.500}",
         "color-primary-hover": "{pink.600}",
-        "color-primary-active": "{pink.700}"
+        "color-primary-active": "{pink.700}",
+        "family": "pink"
       },
       "ice": {
         "color-primary": "{cyan.500}",
         "color-primary-hover": "{cyan.600}",
-        "color-primary-active": "{cyan.700}"
+        "color-primary-active": "{cyan.700}",
+        "family": "cyan"
       },
       "ember": {
         "color-primary": "{orange.500}",
         "color-primary-hover": "{orange.600}",
-        "color-primary-active": "{orange.700}"
+        "color-primary-active": "{orange.700}",
+        "family": "orange"
       },
       "violet": {
         "color-primary": "{violet.500}",
         "color-primary-hover": "{violet.600}",
-        "color-primary-active": "{violet.700}"
+        "color-primary-active": "{violet.700}",
+        "family": "violet"
       }
     },
     "waveforms": {
@@ -225,6 +230,21 @@
         "color-wave-low": "{sky.500}",
         "color-wave-mid": "{orange.400}",
         "color-wave-high": "{wave-high-base}"
+      },
+      "decktint": {
+        "color-wave-low": "{sky.600}",
+        "color-wave-mid": "{sky.400}",
+        "color-wave-high": "{sky.200}",
+        "deck-b": {
+          "color-wave-low": "{orange.600}",
+          "color-wave-mid": "{orange.400}",
+          "color-wave-high": "{orange.200}"
+        }
+      },
+      "contrast": {
+        "color-wave-low": "{blue.600}",
+        "color-wave-mid": "{amber.400}",
+        "color-wave-high": "{neutral.0}"
       },
       "accent": {
         "color-wave-low": "{accent.700}",
@@ -235,6 +255,27 @@
         "color-wave-low": "{color-surface-3}",
         "color-wave-mid": "{color-text-muted}",
         "color-wave-high": "{color-text}"
+      }
+    },
+    "waveforms-custom": {
+      "$description": "Custom: user picks a hue per band. Low uses step 600, mid 400, high 200 or white. Guardrail: adjacent bands must differ by >= 0.12 OKLCH lightness; mid is lifted to 200, then high to neutral.0.",
+      "hues": [
+        "sky",
+        "violet",
+        "pink",
+        "orange",
+        "cyan"
+      ],
+      "steps": {
+        "low": "600",
+        "mid": "400",
+        "high": "200"
+      },
+      "minLightnessGap": 0.12,
+      "default": {
+        "low": "pink",
+        "mid": "orange",
+        "high": "white"
       }
     }
   },
@@ -267,8 +308,11 @@
       ],
       "waveform": [
         "spectral",
+        "decktint",
+        "contrast",
         "accent",
-        "mono"
+        "mono",
+        "custom"
       ],
       "density": [
         "comfortable",

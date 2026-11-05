@@ -456,6 +456,36 @@ TEST(bass_swap_transition_completes) {
     CHECK(maxStep(cap.ch[0]) < 0.5f);
 }
 
+TEST(transition_waits_for_phrase_boundary) {
+    Engine e(kSR, kBlock);
+    e.setOutputLayout({Topology::MasterOnly});
+    synth::TrackSpec a; a.sampleRate = kSR; a.seconds = 60; a.firstBeatSeconds = 0;
+    auto ta = synth::makeTrack(a); ta->grid = {120, 0};
+    synth::TrackSpec b = a; b.seed = 5;
+    auto tb = synth::makeTrack(b); tb->grid = {120, 0};
+    e.loadTrack(0, ta);
+    e.loadTrack(1, tb);
+    e.setCrossfader(-1.0f);
+    e.play(0);
+    Capture cap(2);
+    run(e, cap, 3.0);                       // deck A at beat ~6
+    e.startTransition(0, 1, 8, TransitionStyle::Blend, 16);
+    run(e, cap, 0.1);
+    const EngineStatus waiting = e.status();
+    INFO("waiting: starts in %.2f beats, progress %.2f, deck B playing %d\n", waiting.transitionStartsInBeats,
+         waiting.transitionProgress, int(e.deckStatus(1).playing));
+    CHECK(waiting.transitionStartsInBeats > 9.0f && waiting.transitionStartsInBeats < 10.5f);  // phrase at beat 16
+    CHECK(e.deckStatus(1).playing);                     // incoming deck already running, inaudible
+    CHECK_NEAR(e.status().crossfader, -1.0, 1e-3);      // nothing has moved yet
+    run(e, cap, 5.2);                                   // past beat 16 (t = 8 s) and into the blend
+    const EngineStatus blending = e.status();
+    CHECK(blending.transitionStartsInBeats < 0.0f);
+    CHECK(blending.transitionProgress > 0.0f);
+    const double beatAtStart = e.deckStatus(0).beat - blending.transitionProgress * 8;
+    INFO("blend began at deck A beat %.2f\n", beatAtStart);
+    CHECK_NEAR(beatAtStart, 16.0, 0.3);
+}
+
 // ---- Analysis ----------------------------------------------------------------------------
 TEST(bpm_and_grid_detection) {
     struct Case { double bpm, first, expected; };

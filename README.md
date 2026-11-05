@@ -45,7 +45,7 @@ engine/build/sbe_routing_demo /tmp            # writes master/headphones/multich
 
 # Apple (Swift package: engine + host + tests)
 swift build && swift test
-brew install xcodegen && (cd platforms/apple && xcodegen) && open platforms/apple/RoutingLab.xcodeproj
+brew install xcodegen && (cd platforms/apple && xcodegen) && open platforms/apple/Soundboard.xcodeproj   # schemes: Soundboard, RoutingLab
 
 # Android (Routing Lab app + unit tests); requires Android SDK + NDK
 cd platforms/android && gradle :app:testDebugUnitTest :app:assembleDebug

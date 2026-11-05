@@ -7,7 +7,7 @@ import SoundboardEngine
 /// Decoding uses AVAudioFile (MP3, AAC, ALAC, WAV, AIFF, FLAC). DRM-protected or streaming
 /// content is not file-decodable; streaming catalogues require a licensed partner SDK.
 public final class Track: @unchecked Sendable {
-    public struct Analysis: Sendable {
+    public struct Analysis: Sendable, Equatable, Codable {
         public var bpm: Double
         public var firstBeatFrame: Double
         public var tempoConfidence: Double
@@ -80,6 +80,13 @@ public final class Track: @unchecked Sendable {
                               loudnessLUFS: a.loudness_lufs, autoGainDB: a.auto_gain_db)
         analysis = result
         return result
+    }
+
+    /// Re-apply a previously computed analysis without re-running it (call before loading).
+    public func apply(_ a: Analysis) {
+        sbe_track_set_grid(handle, a.bpm, a.firstBeatFrame)
+        sbe_track_set_auto_gain(handle, a.autoGainDB)
+        analysis = a
     }
 
     /// Three-band waveform overview for drawing.
