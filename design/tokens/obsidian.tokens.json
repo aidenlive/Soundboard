@@ -321,7 +321,110 @@
     }
   },
   "typography": {
-    "ui": "Geist",
-    "numerals": "Geist Mono (tabular)"
+    "$description": "Two families. Geist carries every human sentence; Geist Mono carries readouts: BPM, time, key, dB, labels. Sizes are points (iOS, macOS) and CSS pixels (site).",
+    "families": {
+      "ui": "Geist",
+      "mono": "Geist Mono"
+    },
+    "roles": {
+      "display": {
+        "family": "ui",
+        "size": 26,
+        "weight": 600,
+        "tracking": 0
+      },
+      "title": {
+        "family": "ui",
+        "size": 20,
+        "weight": 600,
+        "tracking": 0
+      },
+      "heading": {
+        "family": "ui",
+        "size": 17,
+        "weight": 600,
+        "tracking": 0
+      },
+      "body": {
+        "family": "ui",
+        "size": 14,
+        "weight": 400,
+        "tracking": 0
+      },
+      "label": {
+        "family": "ui",
+        "size": 13,
+        "weight": 500,
+        "tracking": 0
+      },
+      "caption": {
+        "family": "ui",
+        "size": 12,
+        "weight": 400,
+        "tracking": 0
+      },
+      "eyebrow": {
+        "family": "mono",
+        "size": 10,
+        "weight": 500,
+        "tracking": 1.2,
+        "case": "upper"
+      },
+      "readout-xl": {
+        "family": "mono",
+        "size": 34,
+        "weight": 500,
+        "tracking": 0
+      },
+      "readout-lg": {
+        "family": "mono",
+        "size": 26,
+        "weight": 500,
+        "tracking": 0
+      },
+      "readout": {
+        "family": "mono",
+        "size": 11,
+        "weight": 400,
+        "tracking": 0
+      },
+      "readout-sm": {
+        "family": "mono",
+        "size": 9,
+        "weight": 500,
+        "tracking": 0
+      }
+    }
+  },
+  "space": {
+    "$description": "Spacing scale in points. Density sets the panel padding: comfortable uses lg, compact uses md.",
+    "xxs": 2,
+    "xs": 4,
+    "sm": 8,
+    "md": 12,
+    "lg": 18,
+    "xl": 24,
+    "2xl": 32,
+    "3xl": 48
+  },
+  "radius": {
+    "$description": "Corner radii in points. Controls are md; panels lg; pills full.",
+    "hairline": 1,
+    "xs": 3,
+    "sm": 4,
+    "md": 6,
+    "lg": 8,
+    "xl": 10,
+    "full": 999
+  },
+  "elevation": {
+    "$description": "Obsidian is flat: depth is a lighter surface, not a shadow. Only overlays (sheets, popovers, menus) cast a shadow.",
+    "levels": {
+      "0": "color-background",
+      "1": "color-surface",
+      "2": "color-surface-2",
+      "3": "color-surface-3"
+    },
+    "overlay-shadow": "0 12px 32px oklch(0 0 0 / 0.55)"
   }
 }

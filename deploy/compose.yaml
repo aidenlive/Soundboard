@@ -1,0 +1,10 @@
+# make up · make down. Build context is the repository root.
+services:
+  site:
+    build: { context: .., dockerfile: deploy/Dockerfile, target: site }
+    ports: ["8052:8052"]
+    restart: unless-stopped
+  engine:
+    build: { context: .., dockerfile: deploy/Dockerfile, target: engine }
+    profiles: [tools]
+    volumes: ["../out:/out"]

@@ -1,0 +1,11 @@
+Copyright (c) 2026 aidenlive. All rights reserved.
+
+This repository and everything in it are proprietary. No licence is granted to use, copy,
+modify, merge, publish, distribute, sublicense or sell any part of it without written
+permission from the copyright holder.
+
+Third-party material keeps its own licence:
+
+- Geist and Geist Mono fonts: SIL Open Font License 1.1, see
+  platforms/apple/Sources/SoundboardUI/Resources/Fonts/Geist-OFL.txt
+- Oboe (fetched by Gradle, not vendored): Apache License 2.0

@@ -6,6 +6,19 @@ on:
   pull_request:
 
 jobs:
+  validate:
+    name: make validate (Linux)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Validate
+        run: make validate
+      - name: Site e2e
+        run: make e2e
+
   engine:
     name: Engine (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
@@ -47,8 +60,8 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Swift build + test (macOS)
-        run: swift test
+      - name: make validate (adds swift build + swift test on macOS)
+        run: make validate
       - name: Build for iOS
         run: xcodebuild -scheme SoundboardAudio -destination 'generic/platform=iOS' -skipPackagePluginValidation build CODE_SIGNING_ALLOWED=NO | tail -n 40; exit ${PIPESTATUS[0]}
       - name: Build apps (iOS + macOS)

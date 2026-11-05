@@ -20,7 +20,7 @@ Swift and JNI.
 ```
 include/soundboard/sbe.h   C API (the only header hosts need)
 src/                       engine, deck, DSP, FIFOs, analysis, WAV I/O
-tests/test_main.cpp        24 tests, dependency-free
+tests/test_main.cpp        25 tests, dependency-free
 testing/synth.hpp          deterministic synthetic tracks for tests and the prototype
 tools/routing_demo.cpp     offline routing prototype
 ```
