@@ -110,12 +110,15 @@ public enum CoreAudioDevices {
         return value.takeRetainedValue() as String
     }
 
-    private static func get<T>(_ id: AudioDeviceID, _ selector: AudioObjectPropertySelector,
-                               _ scope: AudioObjectPropertyScope, _ value: inout T) -> OSStatus {
+    /// Reads a fixed-size numeric property (UInt32, Float64). Constrained to numeric types so no object reference can be written through the raw pointer.
+    private static func get<T: Numeric>(_ id: AudioDeviceID, _ selector: AudioObjectPropertySelector,
+                                        _ scope: AudioObjectPropertyScope, _ value: inout T) -> OSStatus {
         var address = AudioObjectPropertyAddress(mSelector: selector, mScope: scope,
                                                  mElement: kAudioObjectPropertyElementMain)
         var size = UInt32(MemoryLayout<T>.size)
-        return AudioObjectGetPropertyData(id, &address, 0, nil, &size, &value)
+        return withUnsafeMutablePointer(to: &value) { ptr in
+            AudioObjectGetPropertyData(id, &address, 0, nil, &size, UnsafeMutableRawPointer(ptr))
+        }
     }
 }
 #endif
