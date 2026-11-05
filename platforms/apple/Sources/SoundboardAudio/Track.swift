@@ -41,26 +41,49 @@ public final class Track: @unchecked Sendable {
     }
 
     /// Decodes a file off the main thread.
+    ///
+    /// Reads in fixed-size chunks until the file reports end of data. `AVAudioFile.length` is only
+    /// an estimate for some compressed files and is 0 for empty or truncated ones; a buffer sized
+    /// from it can have zero capacity, which makes `read(into:)` abort the process with an
+    /// assertion rather than throw.
     public static func decode(url: URL) async throws -> Track {
         try await Task.detached(priority: .userInitiated) {
             let file = try AVAudioFile(forReading: url, commonFormat: .pcmFormatFloat32, interleaved: false)
             let format = file.processingFormat
-            let total = AVAudioFrameCount(file.length)
-            guard let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: total) else {
+            let channels = Int(format.channelCount)
+            let outChannels = max(1, min(channels, 2))
+            guard channels > 0, format.sampleRate > 0 else { throw CocoaError(.fileReadCorruptFile) }
+
+            let chunk: AVAudioFrameCount = 1 << 16
+            guard let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: chunk) else {
                 throw CocoaError(.fileReadCorruptFile)
             }
-            try file.read(into: buffer)
-            let channels = Int(format.channelCount)
-            let n = Int(buffer.frameLength)
-            var interleaved = [Float](repeating: 0, count: n * max(1, min(channels, 2)))
-            let outChannels = max(1, min(channels, 2))
-            if let data = buffer.floatChannelData {
-                for c in 0..<outChannels {
-                    let src = data[c]
-                    for i in 0..<n { interleaved[i * outChannels + c] = src[i] }
+            var interleaved: [Float] = []
+            interleaved.reserveCapacity(max(0, Int(file.length)) * outChannels)
+            while true {
+                try Task.checkCancellation()
+                do {
+                    try file.read(into: buffer, frameCount: chunk)
+                } catch {
+                    // A truncated file fails partway through: keep what decoded cleanly.
+                    if interleaved.isEmpty { throw error }
+                    break
+                }
+                let n = Int(buffer.frameLength)
+                if n == 0 { break }
+                guard let data = buffer.floatChannelData else { throw CocoaError(.fileReadCorruptFile) }
+                let start = interleaved.count
+                interleaved.append(contentsOf: repeatElement(0, count: n * outChannels))
+                interleaved.withUnsafeMutableBufferPointer { out in
+                    for c in 0..<outChannels {
+                        let src = data[c]
+                        for i in 0..<n { out[start + i * outChannels + c] = src[i] }
+                    }
                 }
             }
-            guard let track = Track(interleaved: interleaved, channels: outChannels, sampleRate: format.sampleRate) else {
+            // A file with no audio frames is not a track.
+            guard !interleaved.isEmpty,
+                  let track = Track(interleaved: interleaved, channels: outChannels, sampleRate: format.sampleRate) else {
                 throw CocoaError(.fileReadCorruptFile)
             }
             return track
