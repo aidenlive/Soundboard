@@ -1,0 +1,283 @@
+{
+  "$description": "Soundboard · Obsidian design system. OKLCH only. Components consume semantic tokens (color-*); palettes are referenced only by these mappings. Generated from the design canvas.",
+  "palette": {
+    "neutral": {
+      "0": "oklch(1.000 0.000 260)",
+      "50": "oklch(0.975 0.006 260)",
+      "100": "oklch(0.940 0.006 260)",
+      "200": "oklch(0.880 0.006 260)",
+      "300": "oklch(0.760 0.006 260)",
+      "400": "oklch(0.640 0.006 260)",
+      "500": "oklch(0.530 0.006 260)",
+      "600": "oklch(0.420 0.006 260)",
+      "700": "oklch(0.310 0.006 260)",
+      "800": "oklch(0.235 0.006 260)",
+      "900": "oklch(0.175 0.006 260)",
+      "950": "oklch(0.000 0.000 260)"
+    },
+    "lime": {
+      "50": "oklch(0.977 0.025 128)",
+      "100": "oklch(0.964 0.052 128)",
+      "200": "oklch(0.945 0.095 128)",
+      "300": "oklch(0.924 0.147 128)",
+      "400": "oklch(0.901 0.189 128)",
+      "500": "oklch(0.880 0.210 128)",
+      "600": "oklch(0.775 0.199 128)",
+      "700": "oklch(0.670 0.178 128)",
+      "800": "oklch(0.551 0.151 128)",
+      "900": "oklch(0.425 0.122 128)",
+      "950": "oklch(0.306 0.095 128)"
+    },
+    "pink": {
+      "50": "oklch(0.962 0.028 355)",
+      "100": "oklch(0.928 0.058 355)",
+      "200": "oklch(0.877 0.104 355)",
+      "300": "oklch(0.820 0.161 355)",
+      "400": "oklch(0.757 0.207 355)",
+      "500": "oklch(0.700 0.230 355)",
+      "600": "oklch(0.622 0.218 355)",
+      "700": "oklch(0.544 0.196 355)",
+      "800": "oklch(0.456 0.166 355)",
+      "900": "oklch(0.362 0.133 355)",
+      "950": "oklch(0.274 0.104 355)"
+    },
+    "cyan": {
+      "50": "oklch(0.970 0.017 205)",
+      "100": "oklch(0.948 0.035 205)",
+      "200": "oklch(0.915 0.063 205)",
+      "300": "oklch(0.878 0.098 205)",
+      "400": "oklch(0.837 0.126 205)",
+      "500": "oklch(0.800 0.140 205)",
+      "600": "oklch(0.707 0.133 205)",
+      "700": "oklch(0.614 0.119 205)",
+      "800": "oklch(0.509 0.101 205)",
+      "900": "oklch(0.397 0.081 205)",
+      "950": "oklch(0.292 0.063 205)"
+    },
+    "orange": {
+      "50": "oklch(0.965 0.022 55)",
+      "100": "oklch(0.936 0.045 55)",
+      "200": "oklch(0.892 0.081 55)",
+      "300": "oklch(0.843 0.126 55)",
+      "400": "oklch(0.789 0.162 55)",
+      "500": "oklch(0.740 0.180 55)",
+      "600": "oklch(0.656 0.171 55)",
+      "700": "oklch(0.572 0.153 55)",
+      "800": "oklch(0.477 0.130 55)",
+      "900": "oklch(0.376 0.104 55)",
+      "950": "oklch(0.281 0.081 55)"
+    },
+    "violet": {
+      "50": "oklch(0.961 0.024 295)",
+      "100": "oklch(0.924 0.050 295)",
+      "200": "oklch(0.869 0.090 295)",
+      "300": "oklch(0.808 0.140 295)",
+      "400": "oklch(0.741 0.180 295)",
+      "500": "oklch(0.680 0.200 295)",
+      "600": "oklch(0.605 0.190 295)",
+      "700": "oklch(0.530 0.170 295)",
+      "800": "oklch(0.445 0.144 295)",
+      "900": "oklch(0.355 0.116 295)",
+      "950": "oklch(0.270 0.090 295)"
+    },
+    "sky": {
+      "50": "oklch(0.959 0.019 238)",
+      "100": "oklch(0.920 0.040 238)",
+      "200": "oklch(0.862 0.072 238)",
+      "300": "oklch(0.796 0.112 238)",
+      "400": "oklch(0.725 0.144 238)",
+      "500": "oklch(0.660 0.160 238)",
+      "600": "oklch(0.588 0.152 238)",
+      "700": "oklch(0.516 0.136 238)",
+      "800": "oklch(0.434 0.115 238)",
+      "900": "oklch(0.348 0.093 238)",
+      "950": "oklch(0.266 0.072 238)"
+    },
+    "green": {
+      "50": "oklch(0.959 0.022 150)",
+      "100": "oklch(0.920 0.045 150)",
+      "200": "oklch(0.862 0.081 150)",
+      "300": "oklch(0.796 0.126 150)",
+      "400": "oklch(0.725 0.162 150)",
+      "500": "oklch(0.660 0.180 150)",
+      "600": "oklch(0.588 0.171 150)",
+      "700": "oklch(0.516 0.153 150)",
+      "800": "oklch(0.434 0.130 150)",
+      "900": "oklch(0.348 0.104 150)",
+      "950": "oklch(0.266 0.081 150)"
+    },
+    "amber": {
+      "50": "oklch(0.969 0.020 75)",
+      "100": "oklch(0.944 0.043 75)",
+      "200": "oklch(0.907 0.077 75)",
+      "300": "oklch(0.866 0.119 75)",
+      "400": "oklch(0.821 0.153 75)",
+      "500": "oklch(0.780 0.170 75)",
+      "600": "oklch(0.690 0.162 75)",
+      "700": "oklch(0.600 0.145 75)",
+      "800": "oklch(0.498 0.122 75)",
+      "900": "oklch(0.390 0.099 75)",
+      "950": "oklch(0.288 0.077 75)"
+    },
+    "red": {
+      "50": "oklch(0.956 0.025 27)",
+      "100": "oklch(0.912 0.052 27)",
+      "200": "oklch(0.846 0.095 27)",
+      "300": "oklch(0.773 0.147 27)",
+      "400": "oklch(0.693 0.189 27)",
+      "500": "oklch(0.620 0.210 27)",
+      "600": "oklch(0.554 0.199 27)",
+      "700": "oklch(0.488 0.178 27)",
+      "800": "oklch(0.413 0.151 27)",
+      "900": "oklch(0.334 0.122 27)",
+      "950": "oklch(0.259 0.095 27)"
+    },
+    "blue": {
+      "50": "oklch(0.954 0.023 258)",
+      "100": "oklch(0.908 0.048 258)",
+      "200": "oklch(0.839 0.086 258)",
+      "300": "oklch(0.762 0.133 258)",
+      "400": "oklch(0.677 0.171 258)",
+      "500": "oklch(0.600 0.190 258)",
+      "600": "oklch(0.537 0.180 258)",
+      "700": "oklch(0.474 0.162 258)",
+      "800": "oklch(0.403 0.137 258)",
+      "900": "oklch(0.327 0.110 258)",
+      "950": "oklch(0.256 0.086 258)"
+    }
+  },
+  "semantic": {
+    "always": {
+      "color-success": "{green.500}",
+      "color-warning": "{amber.500}",
+      "color-error": "{red.500}",
+      "color-info": "{blue.500}",
+      "color-on-primary": "{neutral.950}",
+      "color-cue-1": "{pink.500}",
+      "color-cue-2": "{orange.500}",
+      "color-cue-3": "{sky.400}",
+      "color-cue-4": "{violet.500}"
+    },
+    "themes": {
+      "oled": {
+        "color-background": "{neutral.950}",
+        "color-surface": "{neutral.900}",
+        "color-surface-2": "{neutral.800}",
+        "color-surface-3": "{neutral.700}",
+        "color-border": "{neutral.800}",
+        "color-text": "{neutral.50}",
+        "color-text-secondary": "{neutral.300}",
+        "color-text-muted": "{neutral.400}",
+        "wave-high-base": "{neutral.50}"
+      },
+      "graphite": {
+        "color-background": "{neutral.900}",
+        "color-surface": "{neutral.800}",
+        "color-surface-2": "{neutral.700}",
+        "color-surface-3": "{neutral.600}",
+        "color-border": "{neutral.700}",
+        "color-text": "{neutral.50}",
+        "color-text-secondary": "{neutral.200}",
+        "color-text-muted": "{neutral.300}",
+        "wave-high-base": "{neutral.50}"
+      },
+      "daylight": {
+        "color-background": "{neutral.50}",
+        "color-surface": "{neutral.0}",
+        "color-surface-2": "{neutral.100}",
+        "color-surface-3": "{neutral.200}",
+        "color-border": "{neutral.200}",
+        "color-text": "{neutral.900}",
+        "color-text-secondary": "{neutral.600}",
+        "color-text-muted": "{neutral.500}",
+        "wave-high-base": "{neutral.900}"
+      }
+    },
+    "accents": {
+      "volt": {
+        "color-primary": "{lime.500}",
+        "color-primary-hover": "{lime.600}",
+        "color-primary-active": "{lime.700}"
+      },
+      "signal": {
+        "color-primary": "{pink.500}",
+        "color-primary-hover": "{pink.600}",
+        "color-primary-active": "{pink.700}"
+      },
+      "ice": {
+        "color-primary": "{cyan.500}",
+        "color-primary-hover": "{cyan.600}",
+        "color-primary-active": "{cyan.700}"
+      },
+      "ember": {
+        "color-primary": "{orange.500}",
+        "color-primary-hover": "{orange.600}",
+        "color-primary-active": "{orange.700}"
+      },
+      "violet": {
+        "color-primary": "{violet.500}",
+        "color-primary-hover": "{violet.600}",
+        "color-primary-active": "{violet.700}"
+      }
+    },
+    "waveforms": {
+      "spectral": {
+        "color-wave-low": "{sky.500}",
+        "color-wave-mid": "{orange.400}",
+        "color-wave-high": "{wave-high-base}"
+      },
+      "accent": {
+        "color-wave-low": "{accent.700}",
+        "color-wave-mid": "{color-primary}",
+        "color-wave-high": "{accent.300}"
+      },
+      "mono": {
+        "color-wave-low": "{color-surface-3}",
+        "color-wave-mid": "{color-text-muted}",
+        "color-wave-high": "{color-text}"
+      }
+    }
+  },
+  "appearance": {
+    "defaults": {
+      "theme": "oled",
+      "accent": "volt",
+      "deckView": "linear",
+      "waveform": "spectral",
+      "density": "comfortable",
+      "followSystem": false
+    },
+    "options": {
+      "theme": [
+        "oled",
+        "graphite",
+        "daylight"
+      ],
+      "accent": [
+        "volt",
+        "signal",
+        "ice",
+        "ember",
+        "violet"
+      ],
+      "deckView": [
+        "linear",
+        "radial",
+        "lanes"
+      ],
+      "waveform": [
+        "spectral",
+        "accent",
+        "mono"
+      ],
+      "density": [
+        "comfortable",
+        "compact"
+      ]
+    }
+  },
+  "typography": {
+    "ui": "Geist",
+    "numerals": "Geist Mono (tabular)"
+  }
+}

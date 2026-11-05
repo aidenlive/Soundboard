@@ -59,6 +59,10 @@ the user (pinch on the workspace, ⌘+/⌘− on Mac).
 
 ## 4. Design language
 
+> **Decided:** Obsidian is the default design system, and users can restyle it in Settings › Appearance
+> (theme, accent, deck view including Radial, waveform colours, density). See
+> [`design/appearance.md`](design/appearance.md) and `design/tokens/obsidian.tokens.json`.
+
 - **Original, not skeuomorphic.** No fake jog wheels or brushed metal. Controls are typographic and
   geometric; the waveform is the hero.
 - **Colour has meaning, never alone.** Deck A cool, deck B warm, consistently across waveform,
