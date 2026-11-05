@@ -17,6 +17,7 @@ real hardware before the full DJ interface is built on top.
 | [`docs/product.md`](docs/product.md) | Assumptions challenged, missing capabilities, progressive workspace, design language |
 | [`docs/roadmap.md`](docs/roadmap.md) | Phases, exit tests, on-device validation matrix, risks |
 | [`docs/design/appearance.md`](docs/design/appearance.md) | Obsidian design system (default) and the user-selectable Appearance model |
+| [`docs/brand.md`](docs/brand.md) · [`brand/`](brand) | Split mark, Pulse element, app icons and usage rules |
 | [`design/tokens/`](design/tokens) | OKLCH palette and semantic tokens (themes, accents, waveform schemes) |
 | [`engine/`](engine) | Soundboard Engine: shared C++17 core with a C API (`sbe.h`), tests and an offline routing prototype |
 | [`platforms/apple/`](platforms/apple) | Swift package `SoundboardAudio` (AVAudioSession, Core Audio, AUAudioUnit host) + Routing Lab (iOS/macOS) |
