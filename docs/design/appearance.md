@@ -49,6 +49,16 @@ knobs, segmented pickers, segmented meters, and pads with cue-colour bars. Corne
    rendering budgets are the same: 120 Hz on ProMotion, and the waveform drawn on the GPU (Metal /
    Compose `Canvas`).
 
+### Code
+
+- `design/tokens/generate.py` writes `ObsidianTokens.generated.swift` from the JSON. Re-run it after
+  any token change; a test fails if the Swift data drifts from the JSON.
+- `SemanticPalette.resolve(_:)` resolves references for one Appearance. Components read
+  `@Environment(\.obsidian)` and use semantic colours only.
+- Waveform presets: Spectral, Deck tint (deck B overrides), High contrast, Accent, Mono, and Custom
+  with guardrails: adjacent bands must differ by at least 0.12 OKLCH lightness. Mid is lifted first,
+  then High falls back to white, and every adjustment is explained to the user.
+
 ### Platform mapping
 
 - **SwiftUI:** `AppearanceSettings` (`@Observable`, persisted with `@AppStorage`) produces a `Theme`

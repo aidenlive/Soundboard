@@ -65,6 +65,7 @@ typedef struct {
 typedef struct {
     float master_peak, cue_peak, limiter_reduction_db, crossfader;
     float transition_progress; /* -1 idle */
+    float transition_starts_in_beats; /* >= 0 while waiting for the phrase boundary, else -1 */
     int cue_available;
     uint32_t cue_underruns;
     uint64_t recorded_frames, record_dropped;
@@ -88,6 +89,7 @@ void sbe_track_release(sbe_track* t);
 /* Analyse (slow) and store grid + auto-gain in the track. Call before loading. */
 void sbe_track_analyze(sbe_track* t, double min_bpm, double target_lufs, sbe_track_analysis* out);
 void sbe_track_set_grid(sbe_track* t, double bpm, double first_beat_frame); /* before loading */
+void sbe_track_set_auto_gain(sbe_track* t, float db);                       /* before loading */
 int sbe_track_waveform(const sbe_track* t, int frames_per_bin, sbe_waveform_bin* out, int max_bins);
 int64_t sbe_track_frames(const sbe_track* t);
 int sbe_keys_compatible(int key_a, int key_b);
@@ -137,6 +139,9 @@ void sbe_preview_play(sbe_engine* e);
 void sbe_preview_stop(sbe_engine* e);
 void sbe_preview_set_gain(sbe_engine* e, float db);
 void sbe_transition_start(sbe_engine* e, int from_deck, int to_deck, double beats, sbe_transition_style style);
+/* Starts the blend on the outgoing deck's next phrase boundary (phrase_beats, e.g. 16); 0 = now. */
+void sbe_transition_start_on_phrase(sbe_engine* e, int from_deck, int to_deck, double beats,
+                                    sbe_transition_style style, int phrase_beats);
 void sbe_transition_cancel(sbe_engine* e);
 void sbe_recording_set(sbe_engine* e, int on);
 size_t sbe_recording_read(sbe_engine* e, float* interleaved_stereo, size_t max_frames);

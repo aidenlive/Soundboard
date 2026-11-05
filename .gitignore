@@ -17,3 +17,7 @@ platforms/android/local.properties
 # Misc
 .DS_Store
 *.wav
+
+# XcodeGen writes these from project.yml
+platforms/apple/App/Info.plist
+platforms/apple/RoutingLab/Info.plist

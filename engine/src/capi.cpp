@@ -58,6 +58,7 @@ void sbe_track_analyze(sbe_track* t, double minBpm, double targetLufs, sbe_track
     out->auto_gain_db = a.autoGainDb;
 }
 void sbe_track_set_grid(sbe_track* t, double bpm, double first) { if (t) t->buffer->grid = sbe::BeatGrid{bpm, first}; }
+void sbe_track_set_auto_gain(sbe_track* t, float db) { if (t) t->buffer->autoGainDb = db; }
 int sbe_track_waveform(const sbe_track* t, int fpb, sbe_waveform_bin* out, int maxBins) {
     if (!t) return 0;
     const auto bins = sbe::computeWaveform(t->buffer->samples.data(), t->buffer->frames, t->buffer->sampleRate, fpb);
@@ -112,6 +113,9 @@ void sbe_preview_set_gain(sbe_engine* e, float db) { e->engine.setPreviewGain(db
 void sbe_transition_start(sbe_engine* e, int from, int to, double beats, sbe_transition_style s) {
     e->engine.startTransition(from, to, beats, sbe::TransitionStyle(int(s)));
 }
+void sbe_transition_start_on_phrase(sbe_engine* e, int from, int to, double beats, sbe_transition_style s, int phrase) {
+    e->engine.startTransition(from, to, beats, sbe::TransitionStyle(int(s)), phrase);
+}
 void sbe_transition_cancel(sbe_engine* e) { e->engine.cancelTransition(); }
 void sbe_recording_set(sbe_engine* e, int on) { e->engine.setRecording(on != 0); }
 size_t sbe_recording_read(sbe_engine* e, float* dst, size_t n) { return e->engine.readRecording(dst, n); }
@@ -130,6 +134,7 @@ void sbe_engine_get_status(const sbe_engine* e, sbe_engine_status* o) {
     const sbe::EngineStatus s = e->engine.status();
     o->master_peak = s.masterPeak; o->cue_peak = s.cuePeak; o->limiter_reduction_db = s.limiterReductionDb;
     o->crossfader = s.crossfader; o->transition_progress = s.transitionProgress;
+    o->transition_starts_in_beats = s.transitionStartsInBeats;
     o->cue_available = s.cueAvailable; o->cue_underruns = s.cueUnderruns;
     o->recorded_frames = s.recordedFrames; o->record_dropped = s.recordDropped;
     o->cue_drift_ratio = s.cueDriftRatio;

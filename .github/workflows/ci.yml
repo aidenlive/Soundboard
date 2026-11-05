@@ -51,12 +51,14 @@ jobs:
         run: swift test
       - name: Build for iOS
         run: xcodebuild -scheme SoundboardAudio -destination 'generic/platform=iOS' -skipPackagePluginValidation build CODE_SIGNING_ALLOWED=NO | tail -n 40; exit ${PIPESTATUS[0]}
-      - name: Build Routing Lab (iOS + macOS)
+      - name: Build apps (iOS + macOS)
         run: |
           brew install xcodegen
           cd platforms/apple && xcodegen
-          xcodebuild -project RoutingLab.xcodeproj -scheme RoutingLab -destination 'generic/platform=iOS' build CODE_SIGNING_ALLOWED=NO | tail -n 40; test ${PIPESTATUS[0]} -eq 0
-          xcodebuild -project RoutingLab.xcodeproj -scheme RoutingLab -destination 'platform=macOS' build CODE_SIGNING_ALLOWED=NO | tail -n 40; test ${PIPESTATUS[0]} -eq 0
+          for scheme in Soundboard RoutingLab; do
+            xcodebuild -project Soundboard.xcodeproj -scheme $scheme -destination 'generic/platform=iOS' build CODE_SIGNING_ALLOWED=NO | tail -n 40; test ${PIPESTATUS[0]} -eq 0
+            xcodebuild -project Soundboard.xcodeproj -scheme $scheme -destination 'platform=macOS' build CODE_SIGNING_ALLOWED=NO | tail -n 40; test ${PIPESTATUS[0]} -eq 0
+          done
 
   android:
     name: Android (unit tests + debug APK)

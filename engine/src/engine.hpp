@@ -58,6 +58,7 @@ struct DeckStatus {
 struct EngineStatus {
     float masterPeak = 0, cuePeak = 0, limiterReductionDb = 0, crossfader = 0;
     float transitionProgress = -1;  // -1 = idle, else 0..1
+    float transitionStartsInBeats = -1;  // >= 0 while waiting for the phrase boundary
     bool cueAvailable = false;
     uint32_t cueUnderruns = 0;
     uint64_t recordedFrames = 0, recordDropped = 0;
@@ -132,7 +133,9 @@ public:
     void setPreviewGain(float db);
 
     // Automated beginner-friendly transition between two decks over `beats` beats.
-    void startTransition(int fromDeck, int toDeck, double beats, TransitionStyle style);
+    // phraseBeats > 0 waits for the outgoing deck's next phrase boundary (e.g. 16 beats) before
+    // the blend begins; the incoming deck is synced and started immediately (still inaudible).
+    void startTransition(int fromDeck, int toDeck, double beats, TransitionStyle style, int phraseBeats = 0);
     void cancelTransition();
 
     // Master recording tap (post-limiter). Drain from a background thread.
@@ -195,7 +198,7 @@ private:
     std::atomic<uint32_t> dropped_{0};
     std::atomic<uint64_t> appliedGeneration_{0};
     std::unique_ptr<std::array<DeckAtomics, kMaxDecks>> deckAtomics_;
-    std::atomic<float> aMasterPeak_{0}, aCuePeak_{0}, aLimiter_{0}, aCrossfader_{0}, aTransition_{-1};
+    std::atomic<float> aMasterPeak_{0}, aCuePeak_{0}, aLimiter_{0}, aCrossfader_{0}, aTransition_{-1}, aTransitionWait_{-1};
     std::atomic<bool> aCueAvailable_{false};
     std::atomic<uint64_t> recordedFrames_{0}, recordDropped_{0};
     std::atomic<double> aCueRatio_{1.0};
