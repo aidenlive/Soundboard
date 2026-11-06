@@ -273,7 +273,7 @@ struct DeckMenu: View {
         Menu {
             Button { actions.openLibrary() } label: { Label(d.loaded ? "Load another track" : "Load a track", systemImage: "music.note.list") }
             if d.loaded {
-                Button { session.enqueue([d.trackID!]); session.eject(index) } label: { Label("Eject to queue", systemImage: "text.badge.plus") }
+                Button { let id = d.trackID!; session.eject(index); session.enqueue([id]) } label: { Label("Eject to queue", systemImage: "text.badge.plus") }
                 Button(role: .destructive) { session.eject(index) } label: { Label("Eject deck \(d.letter)", systemImage: "eject") }
             }
         } label: {

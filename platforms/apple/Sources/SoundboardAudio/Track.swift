@@ -132,7 +132,7 @@ public final class Track: @unchecked Sendable {
             let start = out.count
             out.append(contentsOf: repeatElement(0, count: bytes / MemoryLayout<Float>.size))
             _ = out.withUnsafeMutableBytes { raw in
-                CMBlockBufferCopyDataBytes(block, atOffset: 0, dataLength: bytes, destination: raw.baseAddress! + start * MemoryLayout<Float>.size)
+                CMBlockBufferCopyDataBytes(block, atOffset: 0, dataLength: (bytes / 4) * 4, destination: raw.baseAddress! + start * MemoryLayout<Float>.size)
             }
         }
         if reader.status == .failed, out.isEmpty {

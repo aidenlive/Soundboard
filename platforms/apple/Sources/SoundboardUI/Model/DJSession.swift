@@ -194,7 +194,7 @@ public final class DJSession {
     /// iOS restarts its audio server rarely (and under the debugger). Rebuild the engine and put
     /// the decks back where they were rather than losing the set.
     private func recoverFromMediaReset() async {
-        let snapshot = snapshot()
+        let snapshot = self.snapshot()
         await activateAudioSession()
         rebuildEngine()
         await restore(snapshot)
@@ -584,7 +584,7 @@ public final class DJSession {
         }
         guard decks[from].loaded, decks[to].loaded else { return }
         if !decks[from].playing { togglePlay(from); return }
-        let phrase = Double(prefs.mixing.phraseBeats)
+        let phrase = Int32(prefs.mixing.phraseBeats)
         send { sbe_transition_start_on_phrase($0, Int32(from), Int32(to), Double(self.transitionBeats), self.transition.engineStyle, phrase) }
     }
 

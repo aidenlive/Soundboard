@@ -326,7 +326,7 @@ public final class LibraryStore {
         return p.trackIDs.compactMap { track($0) }
     }
 
-    static func uniqueName(_ base: String, among names: [String]) -> String {
+    nonisolated static func uniqueName(_ base: String, among names: [String]) -> String {
         let clean = base.trimmingCharacters(in: .whitespacesAndNewlines)
         let root = clean.isEmpty ? "Untitled" : clean
         guard names.contains(root) else { return root }
