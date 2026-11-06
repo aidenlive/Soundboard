@@ -290,6 +290,10 @@ struct SettingsView: View {
                 SettingsLink(title: "Sessions", value: session.sessions.current?.name ?? "—", systemImage: "square.stack") {
                     SessionSettingsView(session: session)
                 }
+                divider
+                SettingsLink(title: "Visualizer", value: session.preferences.prefs.visualizer.style.title + " · second screen", systemImage: "waveform.path.ecg.rectangle") {
+                    SettingsPage("Visualizer") { VisualizerSettingsGroups(session: session) }
+                }
             }
             SettingsGroup {
                 SettingsLink(title: "Appearance", value: store.appearance.theme.title + " · " + store.appearance.accent.title, systemImage: "paintpalette") {
@@ -468,6 +472,9 @@ struct MixingSettingsView: View {
                 SettingsToggle(title: "Start tracks on the first beat", isOn: m.loadAtFirstBeat)
                 SettingsToggle(title: "Cue new tracks in the headphones", detail: "When the other deck is playing.", isOn: m.autoCueOnLoad)
             }
+            SettingsGroup("Pitch", footer: "The pitch fader's full travel. ±8 % suits beat-matching; ±50 % is for effects.") {
+                SettingsChoice(title: "Range", divider: false, options: MixingPrefs.pitchRangeChoices.map { ($0, "±\($0) %") }, selection: m.pitchRange)
+            }
             SettingsGroup("Crossfader") {
                 SettingsChoice(title: "Curve", detail: "Smooth for long blends, sharp for cuts and scratching.", divider: false,
                                options: [(0.0, "Smooth"), (0.5, "Medium"), (1.0, "Sharp")], selection: m.crossfaderCurve)
@@ -483,9 +490,18 @@ struct ControllerSettingsView: View {
     let session: DJSession
     @State private var midi: [String] = []
     @Environment(\.obsidian) private var t
+    private var c: Binding<ControllerPrefs> { Binding(get: { session.preferences.prefs.controller }, set: { session.preferences.prefs.controller = $0 }) }
 
     var body: some View {
         SettingsPage("Controllers") {
+            SettingsGroup("On-screen jog wheel", footer: "In DJ layout (landscape) or Deck tools. The edge ring always bends pitch.") {
+                SettingsToggle(title: "Vinyl mode", detail: "Touching the record scratches. Off: the whole wheel nudges pitch, like a CDJ.",
+                               divider: false, isOn: c.vinylMode)
+                SettingsChoice(title: "Sensitivity", options: ControllerPrefs.sensitivityChoices.map { ($0, String(format: "%g×", $0)) },
+                               selection: c.jogSensitivity)
+                SettingsChoice(title: "Start and stop", detail: "Instant like a CDJ, or the spin-up and brake of a turntable.",
+                               options: [(0.0, "Instant"), (0.3, "Quick deck"), (0.8, "Turntable")], selection: c.motorTime)
+            }
             SettingsGroup("Audio", footer: "A DJ controller or interface with four or more outputs gives you a separate headphone output automatically.") {
                 let multi = session.outputs.filter { $0.channels >= 4 }
                 if multi.isEmpty {

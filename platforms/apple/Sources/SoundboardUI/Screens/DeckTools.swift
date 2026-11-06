@@ -14,13 +14,14 @@ struct DeckToolsPanel: View {
     @Environment(\.dismiss) private var dismiss
 
     enum Tab: String, CaseIterable, Identifiable {
-        case jog, loop, cues, fx
+        case jog, loop, cues, eq, fx
         var id: String { rawValue }
         var title: String {
             switch self {
             case .jog: "JOG"
             case .loop: "LOOP"
             case .cues: "CUES"
+            case .eq: "EQ"
             case .fx: "FX"
             }
         }
@@ -37,8 +38,8 @@ struct DeckToolsPanel: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 VStack(alignment: .trailing, spacing: 2) {
-                    Text(Format.bpm(d.effectiveBpm)).font(t.mono(22, .medium)).monospacedDigit().foregroundStyle(t.text)
-                    Text(Format.tempo(d.tempo)).font(t.mono(10)).monospacedDigit().foregroundStyle(t.textMuted)
+                    Text(Format.bpm(d.effectiveBpm)).font(t.mono(22, .medium)).foregroundStyle(t.text).readout()
+                    Text(Format.tempo(d.tempo)).font(t.mono(10)).foregroundStyle(t.textMuted).readout()
                 }
                 .fixedSize()
                 Button("DONE") { dismiss() }.buttonStyle(ObsidianButtonStyle())
@@ -49,14 +50,19 @@ struct DeckToolsPanel: View {
                 case .jog: JogSection(session: session, index: index)
                 case .loop: LoopSection(session: session, index: index)
                 case .cues: PadGrid(session: session, deck: index)
+                case .eq:
+                    VStack(spacing: 16) {
+                        KnobRow(session: session, deck: index)
+                        Fader("Channel \(d.letter) volume", value: Binding(get: { d.fader }, set: { session.set(.fader, deck: index, $0) }), in: 0...1)
+                    }
                 case .fx: EchoSection(session: session, index: index)
                 }
             }
             .frame(maxHeight: .infinity, alignment: .top)
+            .disabled(!d.loaded)
         }
         .padding(t.pad)
         .background(t.background)
-        .disabled(!d.loaded)
     }
 }
 

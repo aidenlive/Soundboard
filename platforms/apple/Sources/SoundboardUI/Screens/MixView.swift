@@ -8,16 +8,23 @@ struct MixView: View {
     var roomy: Bool
     @Environment(\.obsidian) private var t
     @Environment(\.appActions) private var actions
+    @Environment(\.layout) private var layout
 
     var body: some View {
         HStack(alignment: .top, spacing: t.gap) {
             DeckColumn(session: session, index: 0, roomy: roomy)
             VStack(spacing: 6) {
                 HStack(spacing: 4) {
+                    Segmented(DeckMode.allCases.map { ($0, $0.title) }, selection: $session.workspace.deckMode)
+                        .frame(width: 96)
+                        .accessibilityLabel("Layout")
                     RouteChip(session: session).layoutPriority(1)
-                    Spacer(minLength: 8)
-                    SessionChip(session: session)
+                    Spacer(minLength: 4)
+                    if !layout.shortLandscape { SessionChip(session: session) }
                     MixerMenu(session: session)
+                    Button { actions.openVisualizer() } label: { Image(systemName: "waveform.path.ecg.rectangle") }
+                        .buttonStyle(.plain).foregroundStyle(t.textSecondary).frame(width: 40, height: 32)
+                        .accessibilityLabel("Visualizer")
                     Button { actions.openLibrary() } label: { Image(systemName: "list.bullet") }
                         .buttonStyle(.plain).foregroundStyle(t.textSecondary).frame(width: 44, height: 32)
                         .accessibilityLabel("Library")
@@ -27,24 +34,43 @@ struct MixView: View {
                 }
                 ForEach(0..<2, id: \.self) { i in
                     OverviewStrip(session.decks[i].visual, deck: session.decks[i].deck) { session.seek(i, frame: $0) }
-                        .frame(height: 18)
+                        .frame(height: layout.shortLandscape ? 14 : 18)
                 }
-                decksArea
-                    .frame(maxHeight: .infinity)
-                HStack(alignment: .bottom, spacing: 12) {
-                    PadGrid(session: session, deck: 0)
-                    VStack(spacing: 6) {
-                        Fader("Crossfader", value: $session.crossfader, leading: "A", trailing: "B")
-                        MixControls(session: session, showPicker: roomy)
+                Group {
+                    if session.workspace.deckMode == .dj { djArea } else { decksArea }
+                }
+                .frame(maxHeight: .infinity)
+                // Pads need ~44 pt each; when the centre is too narrow they move into Deck tools.
+                ViewThatFits(in: .horizontal) {
+                    HStack(alignment: .bottom, spacing: 12) {
+                        PadGrid(session: session, deck: 0).frame(minWidth: 176)
+                        mixer.frame(width: roomy ? 300 : 200)
+                        PadGrid(session: session, deck: 1).frame(minWidth: 176)
                     }
-                    .frame(width: roomy ? 300 : 190)
-                    PadGrid(session: session, deck: 1)
+                    mixer
                 }
             }
             .frame(maxWidth: .infinity)
             DeckColumn(session: session, index: 1, roomy: roomy)
         }
         .padding(t.pad)
+    }
+
+    private var mixer: some View {
+        VStack(spacing: 6) {
+            Fader("Crossfader", value: $session.crossfader, leading: "A", trailing: "B")
+            MixControls(session: session, showPicker: roomy)
+        }
+    }
+
+    /// DJ layout: two jog wheels with pitch faders on the outside, phase between them.
+    private var djArea: some View {
+        HStack(alignment: .center, spacing: 12) {
+            JogSection(session: session, index: 0, compact: !roomy)
+            PhaseLock(a: session.decks[0], b: session.decks[1])
+            JogSection(session: session, index: 1, compact: !roomy)
+        }
+        .padding(.vertical, 4)
     }
 
     @ViewBuilder private var decksArea: some View {
@@ -78,10 +104,12 @@ struct DeckColumn: View {
     let index: Int
     var roomy: Bool
     @Environment(\.obsidian) private var t
+    @Environment(\.layout) private var layout
+    @State private var tempoOpen = false
 
     var body: some View {
         let d = session.decks[index]
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: layout.shortLandscape ? 4 : 8) {
             HStack(spacing: 4) {
                 Text("DECK \(d.letter)")
                 Spacer(minLength: 2)
@@ -89,9 +117,25 @@ struct DeckColumn: View {
                 DeckMenu(session: session, index: index)
             }
             .font(t.mono(10, .medium)).tracking(1).foregroundStyle(t.textMuted)
-            Text(d.loaded ? d.title : "Empty").font(t.ui(13, .semibold)).lineLimit(2).foregroundStyle(t.text)
-            Text(Format.bpm(d.effectiveBpm)).font(t.mono(26, .medium)).tracking(-1).foregroundStyle(t.text)
-            Text("\(d.camelot.isEmpty ? "—" : d.camelot) · \(Format.tempo(d.tempo))").font(t.mono(10)).foregroundStyle(t.textMuted)
+            Text(d.loaded ? d.title : "Empty").font(t.ui(13, .semibold)).foregroundStyle(t.text)
+                .lineLimit(layout.shortLandscape ? 1 : 2).truncationMode(.tail)
+                .frame(maxWidth: .infinity, minHeight: layout.shortLandscape ? 16 : 34, alignment: .topLeading)
+            Button { tempoOpen = true } label: {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(Format.bpm(d.effectiveBpm)).font(t.mono(layout.shortLandscape ? 20 : 26, .medium)).tracking(-1)
+                        .foregroundStyle(t.text).readout()
+                    Text("\(d.camelot.isEmpty ? "—" : d.camelot) · \(Format.tempo(d.tempo))").font(t.mono(10))
+                        .foregroundStyle(t.textMuted).readout()
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .disabled(!d.loaded)
+            .accessibilityLabel("Tempo deck \(d.letter), \(Format.bpm(d.effectiveBpm)) BPM")
+            .accessibilityHint("Opens pitch, nudge and sync")
+            .popover(isPresented: $tempoOpen) {
+                TempoPopover(session: session, index: index).presentationCompactAdaptation(.popover)
+            }
             if roomy {
                 VStack(spacing: 10) {
                     KnobRow(session: session, deck: index, size: 40)
@@ -102,7 +146,7 @@ struct DeckColumn: View {
             Spacer(minLength: 0)
             transport(d)
         }
-        .frame(width: roomy ? 220 : 120)
+        .frame(width: roomy ? 220 : (layout.shortLandscape ? 132 : 140))
     }
 
     @ViewBuilder private func transport(_ d: DeckState) -> some View {
@@ -114,8 +158,11 @@ struct DeckColumn: View {
                 CueButton(session: session, index: index)
             }
             HStack(spacing: 6) {
-                Button { session.sync(index) } label: { Text("SYNC").frame(maxWidth: .infinity) }
-                    .buttonStyle(ObsidianButtonStyle())
+                Button { session.sync(index) } label: { Text("SYNC").fittedLabel().frame(maxWidth: .infinity) }
+                    .buttonStyle(ObsidianButtonStyle(prominent: d.syncLocked))
+                LoopButton(session: session, index: index)
+            }
+            HStack(spacing: 6) {
                 Button { session.setHeadphoneCue(index, !d.cueEnabled) } label: {
                     Image(systemName: "headphones").frame(maxWidth: .infinity)
                 }
@@ -123,6 +170,9 @@ struct DeckColumn: View {
                 .disabled(!session.cueAvailable)
                 .accessibilityLabel("Headphone cue deck \(d.letter)")
                 .accessibilityValue(d.cueEnabled ? "on" : "off")
+                Button { session.eject(index) } label: { Image(systemName: "eject").frame(maxWidth: .infinity) }
+                    .buttonStyle(ObsidianButtonStyle())
+                    .accessibilityLabel("Eject deck \(d.letter)")
             }
         }
         .disabled(!d.loaded)
@@ -139,7 +189,7 @@ struct CueButton: View {
 
     var body: some View {
         Text("CUE")
-            .font(t.mono(11, .semibold)).tracking(0.8)
+            .font(t.mono(11, .semibold)).tracking(0.8).fittedLabel()
             .frame(maxWidth: .infinity, minHeight: 44)
             .foregroundStyle(t.text)
             .background(held ? t.surface2 : t.surface)

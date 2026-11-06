@@ -34,6 +34,12 @@ targets:
       properties:
         UIBackgroundModes: [audio]
         LSApplicationCategoryType: public.app-category.music
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+        # Black, empty launch screen: the app's own launch sequence shows the mark, so nothing
+        # appears twice and there is no white flash before the OLED theme.
+        UILaunchScreen:
+          UIColorName: LaunchBackground
     dependencies:
       - package: Soundboard
         product: SoundboardUI

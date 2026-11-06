@@ -9,6 +9,7 @@ public struct Preferences: Codable, Equatable {
     public var library = LibraryPrefs()
     public var session = SessionPrefs()
     public var controller = ControllerPrefs()
+    public var visualizer = VisualizerPrefs()
 
     public init() {}
 
@@ -19,6 +20,7 @@ public struct Preferences: Codable, Equatable {
         library = (try? c.decode(LibraryPrefs.self, forKey: .library)) ?? LibraryPrefs()
         session = (try? c.decode(SessionPrefs.self, forKey: .session)) ?? SessionPrefs()
         controller = (try? c.decode(ControllerPrefs.self, forKey: .controller)) ?? ControllerPrefs()
+        visualizer = (try? c.decode(VisualizerPrefs.self, forKey: .visualizer)) ?? VisualizerPrefs()
     }
 }
 

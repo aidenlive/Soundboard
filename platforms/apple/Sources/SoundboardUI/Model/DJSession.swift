@@ -305,6 +305,9 @@ public final class DJSession {
         #endif
     }
 
+    /// The engine, for read-only taps (visualizer). nil until audio starts.
+    var engineHandle: OpaquePointer? { host?.engine }
+
     private func send(_ body: (OpaquePointer) -> Void) {
         if let e = host?.engine { body(e) }
     }

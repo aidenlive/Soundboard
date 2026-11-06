@@ -91,4 +91,19 @@ final class PersistenceTests: XCTestCase {
         XCTAssertEqual(aside.count, 1)
         XCTAssertTrue(aside[0].hasPrefix("library.json.corrupt-"))
     }
+
+    func testNewSettingsDefaultWhenMissing() throws {
+        let p = try decode(Preferences.self, #"{"controller":{"vinylMode":false}}"#)
+        XCTAssertFalse(p.controller.vinylMode)
+        XCTAssertEqual(p.controller.jogSensitivity, 1)
+        XCTAssertEqual(p.controller.motorTime, 0)
+        XCTAssertEqual(p.visualizer, VisualizerPrefs())
+    }
+
+    func testWorkspaceKeepsDeckMode() throws {
+        var w = WorkspaceSnapshot()
+        w.deckMode = .dj
+        XCTAssertEqual(try Storage.decoder.decode(WorkspaceSnapshot.self, from: Storage.encoder.encode(w)).deckMode, .dj)
+        XCTAssertEqual(try decode(WorkspaceSnapshot.self, "{}").deckMode, .mix)
+    }
 }
