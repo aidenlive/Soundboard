@@ -219,6 +219,90 @@ TEST(saved_loop_restores_inactive_then_reloops) {
     CHECK(pos >= kSR * 2.0 && pos < kSR * 3.0);
 }
 
+// ---- Platter: scratch, jog, motor --------------------------------------------------------
+static double framesPerRev() { return Deck::kSecondsPerRevolution * kSR; }
+
+TEST(scratch_follows_the_hand_forward_and_back) {
+    Engine e(kSR, kBlock);
+    e.loadTrack(0, withGrid(synth::makeSine(220, 30, kSR), 120.0, 0.0));
+    Capture cap(2);
+    e.seek(0, kSR * 5); run(e, cap, 0.05);
+    const double start = e.deckStatus(0).position;
+    e.jogTouch(0, true); run(e, cap, 0.02);
+    CHECK(e.deckStatus(0).touched);
+    const size_t moving = cap.size();
+    for (int k = 0; k < 12; ++k) { e.jogScratch(0, 0.25 / 12); run(e, cap, 1.0 / 120); }   // 120 Hz touch events
+    run(e, cap, 0.06);
+    CHECK_NEAR(e.deckStatus(0).position - start, 0.25 * framesPerRev(), 40);
+    CHECK(peak(cap.ch[0], moving, cap.size()) > 0.05);       // a paused record still sounds when moved
+    for (int k = 0; k < 12; ++k) { e.jogScratch(0, -0.25 / 12); run(e, cap, 1.0 / 120); }
+    run(e, cap, 0.06);
+    CHECK_NEAR(e.deckStatus(0).position, start, 40);
+    e.jogTouch(0, false); run(e, cap, 0.1);
+    CHECK(!e.deckStatus(0).playing);
+    CHECK(!e.deckStatus(0).touched);
+}
+
+TEST(holding_a_playing_record_stops_it_silently) {
+    Engine e(kSR, kBlock);
+    e.loadTrack(0, withGrid(synth::makeSine(220, 30, kSR), 120.0, 0.0));
+    Capture cap(2);
+    e.play(0); run(e, cap, 0.5);
+    e.jogTouch(0, true); run(e, cap, 0.06);
+    const double held = e.deckStatus(0).position;
+    const size_t from = cap.size();
+    run(e, cap, 0.2);
+    CHECK_NEAR(e.deckStatus(0).position, held, 2.0);
+    CHECK(peak(cap.ch[0], from, cap.size()) < 1e-3);
+    CHECK(maxStep(cap.ch[0]) < 0.05f);                       // catching the record never clicks
+}
+
+TEST(letting_go_resumes_at_speed_without_a_click) {
+    Engine e(kSR, kBlock);
+    e.loadTrack(0, withGrid(synth::makeSine(220, 30, kSR), 120.0, 0.0));
+    Capture cap(2);
+    e.play(0); run(e, cap, 0.3);
+    e.jogTouch(0, true); run(e, cap, 0.1);
+    e.jogTouch(0, false); run(e, cap, 0.1);
+    const double a = e.deckStatus(0).position;
+    run(e, cap, 0.5);
+    CHECK(e.deckStatus(0).playing);
+    CHECK_NEAR(e.deckStatus(0).position - a, 0.5 * kSR, 0.005 * kSR);
+    CHECK(maxStep(cap.ch[0]) < 0.05f);
+}
+
+TEST(turntable_motor_spins_up_and_brakes) {
+    Engine e(kSR, kBlock);
+    e.loadTrack(0, withGrid(synth::makeSine(220, 30, kSR), 120.0, 0.0));
+    e.setMotorTime(0, 0.5);
+    Capture cap(2);
+    run(e, cap, 0.02);
+    const double s0 = e.deckStatus(0).position;
+    e.play(0); run(e, cap, 1.0);
+    const double s1 = e.deckStatus(0).position;
+    CHECK_NEAR(s1 - s0, 0.75 * kSR, 0.02 * kSR);             // linear spin-up over 0.5 s loses 0.25 s
+    e.pause(0); run(e, cap, 1.0);
+    CHECK_NEAR(e.deckStatus(0).position - s1, 0.25 * kSR, 0.02 * kSR);
+    CHECK(!e.deckStatus(0).playing);
+    CHECK(maxStep(cap.ch[0]) < 0.05f);
+}
+
+TEST(jog_edge_bends_pitch_then_returns) {
+    Engine e(kSR, kBlock);
+    auto t = withGrid(synth::makeSine(220, 30, kSR), 120.0, 0.0);
+    e.loadTrack(0, t);
+    e.loadTrack(1, t);
+    Capture cap(2);
+    e.play(0); e.play(1); run(e, cap, 0.2);
+    e.jogBend(0, 0.25); run(e, cap, 0.5);
+    const double lead = e.deckStatus(0).position - e.deckStatus(1).position;
+    CHECK(lead > 150);                                       // pushed ahead (≈ 6 ms per quarter turn)
+    run(e, cap, 1.0);
+    const double later = e.deckStatus(0).position - e.deckStatus(1).position;
+    CHECK_NEAR(later, lead, 30);                             // bend decayed: same speed again
+    INFO("bend moved deck A ahead by %.0f frames\n", lead);
+}
+
 // ---- Routing: the core problem -----------------------------------------------------------
 TEST(cue_never_leaks_into_master_multichannel) {
     Engine e(kSR, kBlock);
