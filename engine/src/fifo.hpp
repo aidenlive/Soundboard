@@ -1,5 +1,6 @@
 // Soundboard Engine — lock-free single-producer/single-consumer queues.
 #pragma once
+#include <array>
 
 #include <algorithm>
 #include <atomic>
@@ -11,6 +12,32 @@
 #include "dsp.hpp"
 
 namespace sbe {
+
+// The most recent N mono samples of an audio stream, for visuals. The audio thread writes every
+// sample; any other thread copies the latest window. Samples are relaxed atomics, so a reader may
+// see a window that straddles one write (harmless for a visualizer) but never a torn float.
+class VisualTap {
+public:
+    static constexpr size_t kSize = 8192;  // power of two; > 170 ms at 48 kHz
+    void write(const float* l, const float* r, int n) {
+        uint64_t w = written_.load(std::memory_order_relaxed);
+        for (int i = 0; i < n; ++i, ++w) buf_[w & (kSize - 1)].store(0.5f * (l[i] + r[i]), std::memory_order_relaxed);
+        written_.store(w, std::memory_order_release);
+    }
+    // Copies the newest `n` samples (oldest first). Returns how many were available.
+    size_t readLatest(float* out, size_t n) const {
+        const uint64_t w = written_.load(std::memory_order_acquire);
+        n = std::min<size_t>({n, kSize, size_t(w)});
+        for (size_t i = 0; i < n; ++i) out[i] = buf_[(w - n + i) & (kSize - 1)].load(std::memory_order_relaxed);
+        return n;
+    }
+    uint64_t written() const { return written_.load(std::memory_order_relaxed); }
+
+private:
+    std::array<std::atomic<float>, kSize> buf_{};
+    std::atomic<uint64_t> written_{0};
+};
+
 
 // Bounded SPSC queue of trivially copyable messages (UI thread -> audio thread and back).
 template <typename T>

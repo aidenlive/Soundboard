@@ -303,6 +303,24 @@ TEST(jog_edge_bends_pitch_then_returns) {
     INFO("bend moved deck A ahead by %.0f frames\n", lead);
 }
 
+TEST(visual_tap_holds_the_latest_master_samples) {
+    Engine e(kSR, kBlock);
+    e.loadTrack(0, withGrid(synth::makeSine(440, 10, kSR), 120.0, 0.0));
+    Capture cap(2);
+    e.play(0); run(e, cap, 0.5);
+    std::vector<float> v(2048);
+    const size_t n = e.readVisual(v.data(), v.size());
+    CHECK(n == 2048);
+    // Mono of the last 2048 master frames, exactly.
+    double err = 0;
+    for (size_t i = 0; i < n; ++i) {
+        const size_t k = cap.size() - n + i;
+        err = std::max(err, double(std::fabs(v[i] - 0.5f * (cap.ch[0][k] + cap.ch[1][k]))));
+    }
+    CHECK(err < 1e-6);
+    CHECK(level(v, 0, n, 440) > 0.05);
+}
+
 // ---- Routing: the core problem -----------------------------------------------------------
 TEST(cue_never_leaks_into_master_multichannel) {
     Engine e(kSR, kBlock);

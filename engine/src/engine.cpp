@@ -621,6 +621,8 @@ void Engine::processBlock(int n) {
         cueMeter_.value *= meterDecay_;
     }
     masterDelay_.process(mL_.data(), mR_.data(), n);
+    // After the latency-compensation delay: visuals match what the speakers play.
+    visualTap_.write(mL_.data(), mR_.data(), n);
 }
 
 void Engine::render(float* const* out, int nch, int frames) {

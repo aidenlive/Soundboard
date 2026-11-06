@@ -146,5 +146,8 @@ void sbe_engine_get_status(const sbe_engine* e, sbe_engine_status* o) {
     o->cue_drift_ratio = s.cueDriftRatio;
 }
 void sbe_engine_collect_garbage(sbe_engine* e) { e->engine.collectGarbage(); }
+int sbe_engine_read_visual(const sbe_engine* e, float* out, int frames) {
+    return frames > 0 && out ? int(e->engine.readVisual(out, size_t(frames))) : 0;
+}
 
 }  // extern "C"

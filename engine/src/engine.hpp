@@ -145,6 +145,8 @@ public:
 
     // Master recording tap (post-limiter). Drain from a background thread.
     void setRecording(bool on);
+    // Visual tap: the newest master samples (mono, post-limiter) for visualizers. Any thread.
+    size_t readVisual(float* out, size_t frames) const { return visualTap_.readLatest(out, frames); }
     size_t readRecording(float* interleavedStereo, size_t maxFrames);
 
     DeckStatus deckStatus(int deck) const;
@@ -195,6 +197,7 @@ private:
     PeakMeter masterMeter_, cueMeter_;
     DriftCompensatedFifo cueFifo_;
     StereoRing recordRing_;
+    VisualTap visualTap_;
     std::vector<float> mL_, mR_, cL_, cR_, tL_, tR_;
     float meterDecay_ = 0.9f;
 

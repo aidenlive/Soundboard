@@ -156,6 +156,9 @@ void sbe_transition_start_on_phrase(sbe_engine* e, int from_deck, int to_deck, d
                                     sbe_transition_style style, int phrase_beats);
 void sbe_transition_cancel(sbe_engine* e);
 void sbe_recording_set(sbe_engine* e, int on);
+/* Visualizers: copies the newest `frames` master samples (mono, post-limiter, oldest first) into
+ * `out`; returns how many were copied (at most 8192). Safe from any thread, never blocks audio. */
+int sbe_engine_read_visual(const sbe_engine* e, float* out, int frames);
 size_t sbe_recording_read(sbe_engine* e, float* interleaved_stereo, size_t max_frames);
 
 /* ---- Status --------------------------------------------------------------------------- */
