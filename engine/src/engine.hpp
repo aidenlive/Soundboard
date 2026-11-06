@@ -47,7 +47,7 @@ enum class TransitionStyle : int { Blend = 0, BassSwap = 1, FilterSweep = 2, Ech
 enum class EqBand : int { Low = 0, Mid = 1, High = 2 };
 
 struct DeckStatus {
-    bool loaded = false, playing = false, loopActive = false, syncLocked = false, cueEnabled = false;
+    bool loaded = false, playing = false, loopActive = false, syncLocked = false, cueEnabled = false, touched = false;
     double position = 0, frames = 0, sampleRate = 0;
     double bpm = 0, effectiveBpm = 0, tempo = 1, beat = 0;
     double cuePoint = 0, loopIn = 0, loopOut = 0;
@@ -102,6 +102,10 @@ public:
     void setBeatLoop(int deck, double beats);
     void setLoop(int deck, double inFrame, double outFrame, bool active);  // restore a saved loop
     void exitLoop(int deck);
+    void jogTouch(int deck, bool on);          // hand on / off the platter
+    void jogScratch(int deck, double revolutions);
+    void jogBend(int deck, double revolutions);
+    void setMotorTime(int deck, double seconds);
     void reloop(int deck);
     void scaleLoop(int deck, double factor);
     void beatJump(int deck, double beats);

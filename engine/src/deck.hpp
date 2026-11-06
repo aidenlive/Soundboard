@@ -63,10 +63,27 @@ public:
     double position() const { return pos_; }
     bool ended() const { return ended_; }
 
+    // Vinyl / platter (the jog wheel). One revolution = 1.8 s of audio (33⅓ rpm).
+    //  touch(true)   hand on the record: it follows the hand, stopping if the hand is still.
+    //  scratch(rev)  move the hand by `rev` revolutions (signed) while touched.
+    //  touch(false)  let go: the motor brings it back to speed (or to rest if paused).
+    //  bend(rev)     turn the jog's edge: a temporary pitch bend that decays (beat-matching by hand).
+    //  setMotorTime  0 = instant start and stop (CDJ); > 0 = turntable spin-up / brake time.
+    static constexpr double kSecondsPerRevolution = 1.8;
+    void touch(bool on);
+    void scratch(double revolutions);
+    void bend(double revolutions);
+    void setMotorTime(double seconds) { motorSeconds_ = std::clamp(seconds, 0.0, 4.0); }
+    bool touched() const { return touched_; }
+
 private:
     double clampFrame(double f) const;
     void jumpTo(double frame);
     float sampleAt(double pos, int ch) const;
+    void renderPlatter(float* l, float* r, int n, double srcRatio);
+    void startMotorRamp();
+    double motorTarget(double srcRatio) const { return playing_ ? effectiveRate() * bendFactor() * srcRatio : 0.0; }
+    double bendFactor() const { return 1.0 + std::clamp(bend_, -0.5, 0.5); }
 
     const AudioBuffer* track_ = nullptr;
     double outRate_ = 48000.0;
@@ -81,6 +98,13 @@ private:
     std::array<double, kHotCues> hotCues_{};
     bool loopActive_ = false;
     double loopIn_ = 0.0, loopOut_ = 0.0;
+
+    // Platter state. While `platter_` is set the deck is driven by `vel_` (track frames per output
+    // frame, signed) instead of the smoothed tempo: during a scratch, and while the motor ramps.
+    bool platter_ = false, touched_ = false;
+    double vel_ = 0.0, hand_ = 0.0, rampStep_ = 0.0;
+    double bend_ = 0.0, motorSeconds_ = 0.0;
+    SmoothedValue speedGain_;
 };
 
 }  // namespace sbe

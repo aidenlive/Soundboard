@@ -23,6 +23,11 @@ public struct DeckState: Equatable {
     public var syncLocked = false
     public var cueEnabled = false
     public var loopActive = false
+    /// A hand is on the jog wheel.
+    public var touched = false
+    /// Beat echo on the channel: 0 = off.
+    public var echoWet = 0.0
+    public var echoBeats = 0.75
     public var loopIn = 0.0
     public var loopOut = 0.0
     public var hotCues: [Double] = Array(repeating: -1, count: 8)
@@ -43,7 +48,7 @@ public struct DeckState: Equatable {
     public var elapsed: Double { max(0, visual.position / max(1, sampleRate)) }
     public var deck: SemanticPalette.Deck { index == 0 ? .a : .b }
     public var letter: String { index == 0 ? "A" : "B" }
-    public var mixerIsNeutral: Bool { trim == 0 && high == 0 && mid == 0 && low == 0 && filter == 0 && fader == 1 }
+    public var mixerIsNeutral: Bool { trim == 0 && high == 0 && mid == 0 && low == 0 && filter == 0 && fader == 1 && echoWet == 0 }
 }
 
 public enum TransitionKind: String, CaseIterable, Identifiable, Codable, Sendable {
@@ -218,7 +223,9 @@ public final class DJSession {
     private func applyEngineSettings() {
         let m = prefs.mixing
         let ceiling = prefs.audio.limiterCeilingDb
+        let motor = prefs.controller.motorTime
         send { e in
+            for i in 0..<2 { sbe_deck_set_motor_time(e, Int32(i), motor) }
             sbe_engine_set_quantize(e, m.quantize ? 1 : 0)
             sbe_engine_set_auto_gain(e, m.autoGain ? 1 : 0)
             sbe_mixer_set_crossfader_curve(e, Float(m.crossfaderCurve))
@@ -233,7 +240,8 @@ public final class DJSession {
     /// Settings changed. Audio changes re-plan the outputs; the rest apply live.
     public func preferencesChanged(from old: Preferences) {
         let new = prefs
-        if old.mixing != new.mixing || old.audio.limiterCeilingDb != new.audio.limiterCeilingDb { applyEngineSettings() }
+        if old.mixing != new.mixing || old.audio.limiterCeilingDb != new.audio.limiterCeilingDb
+            || old.controller.motorTime != new.controller.motorTime { applyEngineSettings() }
         if old.mixing.transition != new.mixing.transition { transition = new.mixing.transition }
         if old.mixing.transitionBeats != new.mixing.transitionBeats { transitionBeats = new.mixing.transitionBeats }
         var audioOld = old.audio, audioNew = new.audio
@@ -330,6 +338,7 @@ public final class DJSession {
             deck.syncLocked = d.sync_locked != 0
             deck.cueEnabled = d.cue_enabled != 0
             deck.loopActive = d.loop_active != 0
+            deck.touched = d.touched != 0
             deck.loopIn = d.loop_in
             deck.loopOut = d.loop_out
             deck.visual.loop = d.loop_active != 0 && d.loop_out > d.loop_in ? d.loop_in...d.loop_out : nil
@@ -446,6 +455,7 @@ public final class DJSession {
                 d.trim = decks[i].trim; d.high = decks[i].high; d.mid = decks[i].mid
                 d.low = decks[i].low; d.filter = decks[i].filter; d.fader = decks[i].fader
             }
+            d.echoWet = decks[i].echoWet; d.echoBeats = decks[i].echoBeats
             decks[i] = d
             pendingCues[i] = (lt.hotCues, 0)
             send { e in
@@ -483,6 +493,7 @@ public final class DJSession {
         var d = DeckState(index: i)
         d.trim = decks[i].trim; d.high = decks[i].high; d.mid = decks[i].mid
         d.low = decks[i].low; d.filter = decks[i].filter; d.fader = decks[i].fader
+        d.echoWet = decks[i].echoWet; d.echoBeats = decks[i].echoBeats
         decks[i] = d
     }
 
@@ -500,6 +511,51 @@ public final class DJSession {
     }
     public func beatJump(_ i: Int, beats: Double) { send { sbe_deck_beat_jump($0, Int32(i), beats) } }
     public func setHeadphoneCue(_ i: Int, _ on: Bool) { send { sbe_channel_set_cue($0, Int32(i), on ? 1 : 0) } }
+
+    // MARK: Jog, pitch, loops, FX (DJ mode)
+
+    /// Hand on (or off) the platter. Off lets the motor bring the record back to speed.
+    public func jogTouch(_ i: Int, _ on: Bool) { send { sbe_deck_jog_touch($0, Int32(i), on ? 1 : 0) } }
+
+    /// Moves the record under the hand, in wheel revolutions (scaled by Settings › Controllers).
+    public func jogScratch(_ i: Int, revolutions: Double) {
+        let r = revolutions * prefs.controller.jogSensitivity
+        send { sbe_deck_jog_scratch($0, Int32(i), r) }
+    }
+
+    /// Turns the wheel's edge: a short pitch bend for beat-matching by hand.
+    public func jogBend(_ i: Int, revolutions: Double) {
+        let r = revolutions * prefs.controller.jogSensitivity
+        send { sbe_deck_jog_bend($0, Int32(i), r) }
+    }
+
+    public var pitchRange: Double { Double(prefs.mixing.pitchRange) / 100 }
+
+    /// Pitch fader: tempo as a ratio, limited to the range in Settings › Mixing. Unlocks sync.
+    public func setTempo(_ i: Int, _ ratio: Double) {
+        let r = min(1 + pitchRange, max(1 - pitchRange, ratio))
+        decks[i].tempo = r
+        send { sbe_deck_set_tempo($0, Int32(i), r) }
+    }
+
+    /// Held nudge: ±3 % while pressed, 0 to release.
+    public func nudge(_ i: Int, _ direction: Int) {
+        let r = direction == 0 ? 1.0 : (direction > 0 ? 1.03 : 0.97)
+        send { sbe_deck_set_nudge($0, Int32(i), r) }
+    }
+
+    public func reloop(_ i: Int) { send { sbe_deck_reloop($0, Int32(i)) } }
+    public func scaleLoop(_ i: Int, _ factor: Double) { send { sbe_deck_loop_scale($0, Int32(i), factor) } }
+    public func setBeatLoop(_ i: Int, beats: Double) { send { sbe_deck_beat_loop($0, Int32(i), beats) } }
+    public func exitLoop(_ i: Int) { send { sbe_deck_loop_exit($0, Int32(i)) } }
+
+    /// Beat echo on a channel. `wet` 0 turns it off (the tail rings out).
+    public func setEcho(_ i: Int, wet: Double, beats: Double? = nil) {
+        decks[i].echoWet = wet
+        if let beats { decks[i].echoBeats = beats }
+        let b = decks[i].echoBeats
+        send { sbe_channel_set_echo($0, Int32(i), Float(wet), b, 0.45) }
+    }
 
     // MARK: Mixer (knob positions → engine units)
 
@@ -524,6 +580,7 @@ public final class DJSession {
             decks[i].trim = 0; decks[i].high = 0; decks[i].mid = 0; decks[i].low = 0
             decks[i].filter = 0; decks[i].fader = 1
             applyMixer(i)
+            if decks[i].echoWet > 0 { setEcho(i, wet: 0) }
         }
         let d = MixerSnapshot()
         if transitionProgress >= 0 || transitionStartsInBeats >= 0 { cancelTransition() }
@@ -663,6 +720,7 @@ public final class DJSession {
             decks[i].trim = s.trim; decks[i].high = s.high; decks[i].mid = s.mid
             decks[i].low = s.low; decks[i].filter = s.filter; decks[i].fader = s.fader
             applyMixer(i)
+            setEcho(i, wet: 0)
             if let id = s.trackID, library.track(id)?.state == .ready {
                 await load(id, deck: i, snapshot: s)
             }

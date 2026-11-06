@@ -60,6 +60,7 @@ typedef struct {
     double cue_point, loop_in, loop_out;
     double hot_cues[8]; /* -1 = unset */
     float fader, peak;
+    int touched; /* hand on the platter (scratching) */
 } sbe_deck_status;
 
 typedef struct {
@@ -114,6 +115,15 @@ void sbe_deck_reloop(sbe_engine* e, int deck);
 void sbe_deck_loop_scale(sbe_engine* e, int deck, double factor);
 void sbe_deck_beat_jump(sbe_engine* e, int deck, double beats);
 void sbe_deck_set_tempo(sbe_engine* e, int deck, double ratio);
+/* Jog wheel / platter. One revolution = 1.8 s of audio (a 33⅓ rpm record).
+ * touch: 1 = hand on the record (it follows the hand), 0 = let go (the motor takes over).
+ * scratch: move the hand by signed revolutions while touched.
+ * bend: turn the jog edge (not touched): a temporary pitch bend that decays.
+ * motor_time: 0 = instant start/stop (CDJ); > 0 = turntable spin-up and brake, in seconds. */
+void sbe_deck_jog_touch(sbe_engine* e, int deck, int touched);
+void sbe_deck_jog_scratch(sbe_engine* e, int deck, double revolutions);
+void sbe_deck_jog_bend(sbe_engine* e, int deck, double revolutions);
+void sbe_deck_set_motor_time(sbe_engine* e, int deck, double seconds);
 void sbe_deck_set_nudge(sbe_engine* e, int deck, double ratio);
 void sbe_deck_sync(sbe_engine* e, int deck, int lock);
 void sbe_deck_unsync(sbe_engine* e, int deck);

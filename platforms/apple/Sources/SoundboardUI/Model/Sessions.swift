@@ -74,9 +74,17 @@ public enum LibrarySort: String, Codable, CaseIterable, Identifiable, Sendable {
     }
 }
 
+/// The landscape layout: waveforms and the Mix button, or jog wheels and pitch faders.
+public enum DeckMode: String, Codable, CaseIterable, Identifiable, Sendable {
+    case mix, dj
+    public var id: String { rawValue }
+    public var title: String { self == .mix ? "MIX" : "DJ" }
+}
+
 public struct WorkspaceSnapshot: Codable, Equatable, Sendable {
     public var librarySource: LibrarySource = .all
     public var librarySort: LibrarySort = .added
+    public var deckMode: DeckMode = .mix
 
     public init() {}
 
@@ -84,6 +92,7 @@ public struct WorkspaceSnapshot: Codable, Equatable, Sendable {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         librarySource = c.value(.librarySource, .all)
         librarySort = c.value(.librarySort, .added)
+        deckMode = c.value(.deckMode, .mix)
     }
 }
 

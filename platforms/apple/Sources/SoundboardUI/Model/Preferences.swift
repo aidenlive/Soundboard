@@ -127,7 +127,25 @@ public struct SessionPrefs: Codable, Equatable {
 }
 
 public struct ControllerPrefs: Codable, Equatable {
+    /// Touching the top of the jog wheel scratches (vinyl). Off: the whole wheel bends pitch (CDJ).
+    public var vinylMode = true
+    /// Revolutions of the record per revolution of the on-screen wheel.
+    public var jogSensitivity = 1.0
+    /// Start and stop time in seconds: 0 = instant (CDJ), > 0 = a turntable's spin-up and brake.
+    public var motorTime = 0.0
+
+    public static let sensitivityChoices: [Double] = [0.5, 1.0, 2.0]
+    public static let motorChoices: [Double] = [0, 0.3, 0.8]
+
     public init() {}
+
+    public init(from decoder: Decoder) throws {
+        let d = ControllerPrefs()
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        vinylMode = c.value(.vinylMode, d.vinylMode)
+        jogSensitivity = c.value(.jogSensitivity, d.jogSensitivity)
+        motorTime = c.value(.motorTime, d.motorTime)
+    }
 }
 
 /// Persists Preferences in UserDefaults, next to Appearance.

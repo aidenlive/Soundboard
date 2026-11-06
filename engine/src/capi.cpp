@@ -83,6 +83,10 @@ void sbe_deck_hot_cue_clear(sbe_engine* e, int d, int i) { e->engine.clearHotCue
 void sbe_deck_beat_loop(sbe_engine* e, int d, double b) { e->engine.setBeatLoop(d, b); }
 void sbe_deck_set_loop(sbe_engine* e, int d, double in, double out, int active) { e->engine.setLoop(d, in, out, active != 0); }
 void sbe_deck_loop_exit(sbe_engine* e, int d) { e->engine.exitLoop(d); }
+void sbe_deck_jog_touch(sbe_engine* e, int d, int on) { e->engine.jogTouch(d, on != 0); }
+void sbe_deck_jog_scratch(sbe_engine* e, int d, double rev) { e->engine.jogScratch(d, rev); }
+void sbe_deck_jog_bend(sbe_engine* e, int d, double rev) { e->engine.jogBend(d, rev); }
+void sbe_deck_set_motor_time(sbe_engine* e, int d, double s) { e->engine.setMotorTime(d, s); }
 void sbe_deck_reloop(sbe_engine* e, int d) { e->engine.reloop(d); }
 void sbe_deck_loop_scale(sbe_engine* e, int d, double f) { e->engine.scaleLoop(d, f); }
 void sbe_deck_beat_jump(sbe_engine* e, int d, double b) { e->engine.beatJump(d, b); }
@@ -130,6 +134,7 @@ void sbe_deck_get_status(const sbe_engine* e, int d, sbe_deck_status* o) {
     o->cue_point = s.cuePoint; o->loop_in = s.loopIn; o->loop_out = s.loopOut;
     for (int i = 0; i < 8; ++i) o->hot_cues[i] = s.hotCues[i];
     o->fader = s.fader; o->peak = s.peak;
+    o->touched = s.touched;
 }
 void sbe_engine_get_status(const sbe_engine* e, sbe_engine_status* o) {
     const sbe::EngineStatus s = e->engine.status();
