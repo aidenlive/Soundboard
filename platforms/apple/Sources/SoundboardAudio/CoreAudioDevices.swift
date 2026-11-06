@@ -52,6 +52,23 @@ public enum CoreAudioDevices {
         return rate
     }
 
+    /// Sets the device's I/O buffer size in frames (clamped by the device). Returns the size in effect.
+    @discardableResult
+    public static func setBufferFrameSize(_ id: AudioDeviceID, frames: UInt32) -> UInt32 {
+        var address = AudioObjectPropertyAddress(mSelector: kAudioDevicePropertyBufferFrameSize,
+                                                 mScope: kAudioObjectPropertyScopeGlobal,
+                                                 mElement: kAudioObjectPropertyElementMain)
+        var value = frames
+        _ = AudioObjectSetPropertyData(id, &address, 0, nil, UInt32(MemoryLayout<UInt32>.size), &value)
+        return bufferFrameSize(id)
+    }
+
+    public static func bufferFrameSize(_ id: AudioDeviceID) -> UInt32 {
+        var frames: UInt32 = 0
+        _ = get(id, kAudioDevicePropertyBufferFrameSize, kAudioObjectPropertyScopeGlobal, &frames)
+        return frames
+    }
+
     static func outputChannelCount(_ id: AudioDeviceID) -> Int {
         var address = AudioObjectPropertyAddress(mSelector: kAudioDevicePropertyStreamConfiguration,
                                                  mScope: kAudioObjectPropertyScopeOutput,

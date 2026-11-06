@@ -47,7 +47,7 @@ enum class TransitionStyle : int { Blend = 0, BassSwap = 1, FilterSweep = 2, Ech
 enum class EqBand : int { Low = 0, Mid = 1, High = 2 };
 
 struct DeckStatus {
-    bool loaded = false, playing = false, loopActive = false, syncLocked = false, cueEnabled = false;
+    bool loaded = false, playing = false, loopActive = false, syncLocked = false, cueEnabled = false, touched = false;
     double position = 0, frames = 0, sampleRate = 0;
     double bpm = 0, effectiveBpm = 0, tempo = 1, beat = 0;
     double cuePoint = 0, loopIn = 0, loopOut = 0;
@@ -100,7 +100,12 @@ public:
     void triggerHotCue(int deck, int index);
     void clearHotCue(int deck, int index);
     void setBeatLoop(int deck, double beats);
+    void setLoop(int deck, double inFrame, double outFrame, bool active);  // restore a saved loop
     void exitLoop(int deck);
+    void jogTouch(int deck, bool on);          // hand on / off the platter
+    void jogScratch(int deck, double revolutions);
+    void jogBend(int deck, double revolutions);
+    void setMotorTime(int deck, double seconds);
     void reloop(int deck);
     void scaleLoop(int deck, double factor);
     void beatJump(int deck, double beats);
@@ -140,6 +145,8 @@ public:
 
     // Master recording tap (post-limiter). Drain from a background thread.
     void setRecording(bool on);
+    // Visual tap: the newest master samples (mono, post-limiter) for visualizers. Any thread.
+    size_t readVisual(float* out, size_t frames) const { return visualTap_.readLatest(out, frames); }
     size_t readRecording(float* interleavedStereo, size_t maxFrames);
 
     DeckStatus deckStatus(int deck) const;
@@ -190,6 +197,7 @@ private:
     PeakMeter masterMeter_, cueMeter_;
     DriftCompensatedFifo cueFifo_;
     StereoRing recordRing_;
+    VisualTap visualTap_;
     std::vector<float> mL_, mR_, cL_, cR_, tL_, tR_;
     float meterDecay_ = 0.9f;
 

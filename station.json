@@ -2,7 +2,7 @@
   "id": "soundboard",
   "name": "Soundboard",
   "purpose": "A DJ app for iPhone, Android and Mac with a separate headphone cue, simple enough to mix two tracks in seconds and deep enough to play a full set.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "status": "draft",
   "organization": "aidenlive",
   "role": "dj-app",

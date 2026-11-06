@@ -7,7 +7,7 @@ namespace sbe {
 
 enum class Engine::Op : uint8_t {
     Layout, Latency, Load, Play, Pause, Toggle, Seek, CuePress, CueRelease, HotSet, HotTrigger,
-    HotClear, BeatLoop, ExitLoop, Reloop, ScaleLoop, BeatJump, Tempo, Nudge, Sync, Unsync, Quantize,
+    HotClear, BeatLoop, SetLoop, ExitLoop, JogTouch, JogScratch, JogBend, MotorTime, Reloop, ScaleLoop, BeatJump, Tempo, Nudge, Sync, Unsync, Quantize,
     Trim, Eq, Filter, Fader, CueEnable, XfAssignOp, Echo, AutoGain, Crossfader, XfCurve, MasterGain,
     Ceiling, HpGain, CueMix, PreviewLoad, PreviewPlay, PreviewStop, PreviewGain, TransitionStart,
     TransitionCancel, Record
@@ -69,7 +69,7 @@ struct Engine::Transition {
 };
 
 struct Engine::DeckAtomics {
-    std::atomic<bool> loaded{false}, playing{false}, loopActive{false}, syncLocked{false}, cue{false};
+    std::atomic<bool> loaded{false}, playing{false}, loopActive{false}, syncLocked{false}, cue{false}, touched{false};
     std::atomic<double> position{0}, frames{0}, sampleRate{0}, bpm{0}, effectiveBpm{0}, tempo{1}, beat{0};
     std::atomic<double> cuePoint{0}, loopIn{0}, loopOut{0};
     std::array<std::atomic<double>, kHotCues> hotCues;
@@ -166,6 +166,13 @@ void Engine::setHotCue(int d, int i, double f) { SBE_SEND(c.op = Op::HotSet; c.d
 void Engine::triggerHotCue(int d, int i) { SBE_SEND(c.op = Op::HotTrigger; c.deck = d; c.i = i); }
 void Engine::clearHotCue(int d, int i) { SBE_SEND(c.op = Op::HotClear; c.deck = d; c.i = i); }
 void Engine::setBeatLoop(int d, double b) { SBE_SEND(c.op = Op::BeatLoop; c.deck = d; c.a = b); }
+void Engine::setLoop(int d, double in, double out, bool active) {
+    SBE_SEND(c.op = Op::SetLoop; c.deck = d; c.a = in; c.b = out; c.i = active ? 1 : 0);
+}
+void Engine::jogTouch(int d, bool on) { SBE_SEND(c.op = Op::JogTouch; c.deck = d; c.i = on ? 1 : 0); }
+void Engine::jogScratch(int d, double rev) { SBE_SEND(c.op = Op::JogScratch; c.deck = d; c.a = rev); }
+void Engine::jogBend(int d, double rev) { SBE_SEND(c.op = Op::JogBend; c.deck = d; c.a = rev); }
+void Engine::setMotorTime(int d, double s) { SBE_SEND(c.op = Op::MotorTime; c.deck = d; c.a = s); }
 void Engine::exitLoop(int d) { SBE_SEND(c.op = Op::ExitLoop; c.deck = d); }
 void Engine::reloop(int d) { SBE_SEND(c.op = Op::Reloop; c.deck = d); }
 void Engine::scaleLoop(int d, double f) { SBE_SEND(c.op = Op::ScaleLoop; c.deck = d; c.a = f); }
@@ -229,7 +236,7 @@ DeckStatus Engine::deckStatus(int d) const {
     const DeckAtomics& a = (*deckAtomics_)[d];
     constexpr auto r = std::memory_order_relaxed;
     s.loaded = a.loaded.load(r); s.playing = a.playing.load(r); s.loopActive = a.loopActive.load(r);
-    s.syncLocked = a.syncLocked.load(r); s.cueEnabled = a.cue.load(r);
+    s.syncLocked = a.syncLocked.load(r); s.cueEnabled = a.cue.load(r); s.touched = a.touched.load(r);
     s.position = a.position.load(r); s.frames = a.frames.load(r); s.sampleRate = a.sampleRate.load(r);
     s.bpm = a.bpm.load(r); s.effectiveBpm = a.effectiveBpm.load(r); s.tempo = a.tempo.load(r);
     s.beat = a.beat.load(r); s.cuePoint = a.cuePoint.load(r); s.loopIn = a.loopIn.load(r);
@@ -297,7 +304,14 @@ void Engine::applyCommand(const Command& c) {
         case Op::HotTrigger: if (dk) dk->triggerHotCue(c.i, quantize_); break;
         case Op::HotClear: if (dk) dk->clearHotCue(c.i); break;
         case Op::BeatLoop: if (dk) dk->setBeatLoop(c.a, quantize_); break;
+        case Op::SetLoop:
+            if (dk) { dk->setLoop(c.a, c.b); if (!c.i) dk->exitLoop(); }
+            break;
         case Op::ExitLoop: if (dk) dk->exitLoop(); break;
+        case Op::JogTouch: if (dk) dk->touch(c.i != 0); break;
+        case Op::JogScratch: if (dk) dk->scratch(c.a); break;
+        case Op::JogBend: if (dk) dk->bend(c.a); break;
+        case Op::MotorTime: if (dk) dk->setMotorTime(c.a); break;
         case Op::Reloop: if (dk) dk->reloop(); break;
         case Op::ScaleLoop: if (dk) dk->scaleLoop(c.a); break;
         case Op::BeatJump: if (dk) dk->beatJump(c.a); break;
@@ -607,6 +621,8 @@ void Engine::processBlock(int n) {
         cueMeter_.value *= meterDecay_;
     }
     masterDelay_.process(mL_.data(), mR_.data(), n);
+    // After the latency-compensation delay: visuals match what the speakers play.
+    visualTap_.write(mL_.data(), mR_.data(), n);
 }
 
 void Engine::render(float* const* out, int nch, int frames) {
@@ -679,6 +695,7 @@ void Engine::publishStatus() {
         a.loaded.store(dk.loaded(), r);
         a.playing.store(dk.playing(), r);
         a.loopActive.store(dk.loopActive(), r);
+        a.touched.store(dk.touched(), r);
         a.syncLocked.store(syncLock_[d], r);
         a.cue.store(s.cue, r);
         a.position.store(dk.position(), r);

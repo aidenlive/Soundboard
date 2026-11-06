@@ -2,7 +2,7 @@
 
 > A DJ app for iPhone, Android and Mac with a separate headphone cue, simple enough to mix two tracks in seconds and deep enough to play a full set.
 
-Version: 0.1.0 (2026-11-05)
+Version: 0.2.0 (2026-11-06)
 Status: draft
 Tier: internal
 Repository: https://github.com/aidenlive/Soundboard
@@ -33,6 +33,9 @@ Paths are relative to this file.
 - docs/decisions/0004-split-mark.html
 - docs/decisions/0005-station-layout.html
 - docs/decisions/0006-phrase-quantised-transitions.html
+- docs/decisions/0007-library-and-sessions.html
+- docs/decisions/0008-vinyl-platter.html
+- docs/decisions/0009-visualizer-and-second-screen.html
 - docs/project/agents.html
 - docs/project/status.html
 - docs/project/roadmap.html
@@ -87,8 +90,8 @@ lines the session gives.
 
 ## MCP tools
 
-None. Soundboard 0.1.0 has no MCP server.
+None. Soundboard 0.2.0 has no MCP server.
 
 ## HTTP operations
 
-None. Soundboard 0.1.0 has no HTTP API. The engine's C API is documented at docs/reference/c-api.html.
+None. Soundboard 0.2.0 has no HTTP API. The engine's C API is documented at docs/reference/c-api.html.

@@ -60,6 +60,7 @@ typedef struct {
     double cue_point, loop_in, loop_out;
     double hot_cues[8]; /* -1 = unset */
     float fader, peak;
+    int touched; /* hand on the platter (scratching) */
 } sbe_deck_status;
 
 typedef struct {
@@ -107,11 +108,22 @@ void sbe_deck_hot_cue_set(sbe_engine* e, int deck, int index, double frame);
 void sbe_deck_hot_cue_trigger(sbe_engine* e, int deck, int index);
 void sbe_deck_hot_cue_clear(sbe_engine* e, int deck, int index);
 void sbe_deck_beat_loop(sbe_engine* e, int deck, double beats);
+/* Restores a saved loop: in/out in track frames; active 0 keeps it stored but not looping (reloop starts it). */
+void sbe_deck_set_loop(sbe_engine* e, int deck, double in_frame, double out_frame, int active);
 void sbe_deck_loop_exit(sbe_engine* e, int deck);
 void sbe_deck_reloop(sbe_engine* e, int deck);
 void sbe_deck_loop_scale(sbe_engine* e, int deck, double factor);
 void sbe_deck_beat_jump(sbe_engine* e, int deck, double beats);
 void sbe_deck_set_tempo(sbe_engine* e, int deck, double ratio);
+/* Jog wheel / platter. One revolution = 1.8 s of audio (a 33⅓ rpm record).
+ * touch: 1 = hand on the record (it follows the hand), 0 = let go (the motor takes over).
+ * scratch: move the hand by signed revolutions while touched.
+ * bend: turn the jog edge (not touched): a temporary pitch bend that decays.
+ * motor_time: 0 = instant start/stop (CDJ); > 0 = turntable spin-up and brake, in seconds. */
+void sbe_deck_jog_touch(sbe_engine* e, int deck, int touched);
+void sbe_deck_jog_scratch(sbe_engine* e, int deck, double revolutions);
+void sbe_deck_jog_bend(sbe_engine* e, int deck, double revolutions);
+void sbe_deck_set_motor_time(sbe_engine* e, int deck, double seconds);
 void sbe_deck_set_nudge(sbe_engine* e, int deck, double ratio);
 void sbe_deck_sync(sbe_engine* e, int deck, int lock);
 void sbe_deck_unsync(sbe_engine* e, int deck);
@@ -144,6 +156,9 @@ void sbe_transition_start_on_phrase(sbe_engine* e, int from_deck, int to_deck, d
                                     sbe_transition_style style, int phrase_beats);
 void sbe_transition_cancel(sbe_engine* e);
 void sbe_recording_set(sbe_engine* e, int on);
+/* Visualizers: copies the newest `frames` master samples (mono, post-limiter, oldest first) into
+ * `out`; returns how many were copied (at most 8192). Safe from any thread, never blocks audio. */
+int sbe_engine_read_visual(const sbe_engine* e, float* out, int frames);
 size_t sbe_recording_read(sbe_engine* e, float* interleaved_stereo, size_t max_frames);
 
 /* ---- Status --------------------------------------------------------------------------- */
