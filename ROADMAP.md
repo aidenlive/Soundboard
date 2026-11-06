@@ -3,28 +3,29 @@
 What is next, by version. Each version ends with an exit test; audio quality, timing and
 reliability gates are never waived. What already shipped is in [CHANGELOG.md](CHANGELOG.md).
 
-## 0.2.0 · Audio validated on hardware
+## 0.3.0 · Audio validated on hardware; Android app
 
 - Run Routing Lab through the [on-device validation matrix](docs/guides/qa.md#on-device-validation-matrix)
   on iPhone, Android and Mac.
 - Record callback timing (p99 render time), xruns, actual buffer sizes and reported latencies per row.
 
-**Exit:** the cue chirp never reaches the speakers in any configuration, with no glitches over 30
-minutes.
+- Android: MediaExtractor and MediaCodec decoding; Compose screens on the same tokens, sessions
+  and library format; jog wheel and visualizer (Presentation API for a second display).
 
-## 0.3.0 · Playable two-deck app on every platform (Levels 1–2)
+**Exit:** the cue chirp never reaches the speakers in any configuration, with no glitches over 30
+minutes; the Android app reaches parity with 0.2.0.
+
+## 0.4.0 · Reliable everywhere
 
 - Crash recovery beyond autosave (resume after a crash mid-set).
-- Android: MediaExtractor and MediaCodec decoding; Compose screens on the same tokens (Kotlin
-  output from the token generator).
 - Measure SwiftUI `Canvas` waveform performance on device; move to Metal if it misses 120 Hz.
 - Wire `SoundboardUI` spacing and radius literals to the generated `space` and `radius` tokens.
 
 **Exit:** 10 first-time users each complete a transition within 60 seconds unaided.
 
-## 0.4.0 · DJ Mode (Level 3)
+## 0.5.0 · DJ Mode depth (Level 3)
 
-- Key-lock (Signalsmith Stretch), slip, quantised pads, rolls, phrase detection, beat-grid editing.
+- Key-lock (Signalsmith Stretch), slip, rolls, phrase detection, beat-grid editing.
 - Recording to file with set history and tracklist export.
 - MIDI (CoreMIDI, android.media.midi) with a shared mapping format; the first three
   class-compliant controllers.
@@ -32,7 +33,7 @@ minutes.
 
 **Exit:** two working DJs play 60-minute sets on phone and Mac; no xruns; sync round-trips cue edits.
 
-## 0.5.0 · Pro Studio (Level 4)
+## 0.6.0 · Pro Studio (Level 4)
 
 - Four decks, routing matrix, latency calibration wizard (loopback), sampler, external input decks.
 - Stems (on-device separation), Ableton Link, customisable layouts, controller profiles.

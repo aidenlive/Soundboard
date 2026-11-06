@@ -16,11 +16,11 @@
 <header class="site-header"><div class="frame bar">
 <a class="brand" href="../../index.html"><picture><source srcset="../../assets/mark-on-light.svg" media="(prefers-color-scheme: light)"><img class="mark" src="../../assets/mark.svg" alt=""></picture><span>Soundboard</span></a>
 <nav class="top-nav" aria-label="Site"><a href="../../docs/index.html" aria-current="page">Docs</a><a href="../../design/index.html">Design</a><a href="../../system/index.html">System</a><a href="../../llm.txt">llm.txt</a></nav>
-<span class="version">0.1.0 · draft</span>
+<span class="version">0.2.0 · draft</span>
 </div></header>
 <div class="frame docs" id="main">
 <input type="checkbox" id="nav-toggle" class="nav-toggle"><label for="nav-toggle" class="nav-toggle-label">Contents</label>
-<nav class="sidebar" aria-label="Documentation"><div class="nav-group"><h2>Start</h2><ul><li><a href="../index.html">Overview</a></li><li><a href="../guides/local-development.html">Local development</a></li></ul></div><div class="nav-group"><h2>Guides</h2><ul><li><a href="../guides/deploy.html">Deploy</a></li><li><a href="../guides/dev-logins.html">Dev logins and defaults</a></li><li><a href="../guides/qa.html">QA</a></li></ul></div><div class="nav-group"><h2>Reference</h2><ul><li><a href="../architecture.html">Architecture</a></li><li><a href="../research/platform-audio.html">Platform audio research</a></li><li><a href="../product.html">Product &amp; experience</a></li><li><a href="../design/appearance.html">Design system</a></li><li><a href="../brand.html">Brand</a></li><li><a href="engine.html">Engine</a></li><li><a href="c-api.html" aria-current="page">C API</a></li></ul></div><div class="nav-group"><h2>Decisions</h2><ul><li><a href="../decisions/index.html">All decisions</a></li><li><a href="../decisions/0001-shared-cpp-engine.html">0001 · Shared C++ engine behind a C API</a></li><li><a href="../decisions/0002-cue-routing-topologies.html">0002 · Four output topologies; Bluetooth is master only</a></li><li><a href="../decisions/0003-obsidian-and-appearance.html">0003 · Obsidian is the default design system; users can change its look</a></li><li><a href="../decisions/0004-split-mark.html">0004 · Split is the primary mark; Pulse is a supporting element</a></li><li><a href="../decisions/0005-station-layout.html">0005 · Adopt Station 1.2.1 as an internal, small-shape repository</a></li><li><a href="../decisions/0006-phrase-quantised-transitions.html">0006 · Automatic transitions start on the next phrase</a></li><li><a href="../decisions/0007-library-and-sessions.html">0007 · One shared library; named sessions; imports copied in</a></li></ul></div><div class="nav-group"><h2>Project</h2><ul><li><a href="../project/agents.html">Agents</a></li><li><a href="../project/status.html">Status</a></li><li><a href="../project/roadmap.html">Roadmap</a></li><li><a href="../project/changelog.html">Changelog</a></li><li><a href="../project/security.html">Security</a></li><li><a href="../project/contributors.html">Contributors</a></li></ul></div></nav>
+<nav class="sidebar" aria-label="Documentation"><div class="nav-group"><h2>Start</h2><ul><li><a href="../index.html">Overview</a></li><li><a href="../guides/local-development.html">Local development</a></li></ul></div><div class="nav-group"><h2>Guides</h2><ul><li><a href="../guides/deploy.html">Deploy</a></li><li><a href="../guides/dev-logins.html">Dev logins and defaults</a></li><li><a href="../guides/qa.html">QA</a></li></ul></div><div class="nav-group"><h2>Reference</h2><ul><li><a href="../architecture.html">Architecture</a></li><li><a href="../research/platform-audio.html">Platform audio research</a></li><li><a href="../product.html">Product &amp; experience</a></li><li><a href="../design/appearance.html">Design system</a></li><li><a href="../brand.html">Brand</a></li><li><a href="engine.html">Engine</a></li><li><a href="c-api.html" aria-current="page">C API</a></li></ul></div><div class="nav-group"><h2>Decisions</h2><ul><li><a href="../decisions/index.html">All decisions</a></li><li><a href="../decisions/0001-shared-cpp-engine.html">0001 · Shared C++ engine behind a C API</a></li><li><a href="../decisions/0002-cue-routing-topologies.html">0002 · Four output topologies; Bluetooth is master only</a></li><li><a href="../decisions/0003-obsidian-and-appearance.html">0003 · Obsidian is the default design system; users can change its look</a></li><li><a href="../decisions/0004-split-mark.html">0004 · Split is the primary mark; Pulse is a supporting element</a></li><li><a href="../decisions/0005-station-layout.html">0005 · Adopt Station 1.2.1 as an internal, small-shape repository</a></li><li><a href="../decisions/0006-phrase-quantised-transitions.html">0006 · Automatic transitions start on the next phrase</a></li><li><a href="../decisions/0007-library-and-sessions.html">0007 · One shared library; named sessions; imports copied in</a></li><li><a href="../decisions/0008-vinyl-platter.html">0008 · A vinyl platter model in the engine</a></li><li><a href="../decisions/0009-visualizer-and-second-screen.html">0009 · Visualizer from the master tap, on its own screen</a></li></ul></div><div class="nav-group"><h2>Project</h2><ul><li><a href="../project/agents.html">Agents</a></li><li><a href="../project/status.html">Status</a></li><li><a href="../project/roadmap.html">Roadmap</a></li><li><a href="../project/changelog.html">Changelog</a></li><li><a href="../project/security.html">Security</a></li><li><a href="../project/contributors.html">Contributors</a></li></ul></div></nav>
 <article class="prose">
 <h1 id="c-api">C API</h1>
 <p><code>engine/include/soundboard/sbe.h</code> is the one boundary between the engine and the platform hosts. Soundboard Engine — C API.</p>
@@ -73,6 +73,7 @@ typedef struct {
     double cue_point, loop_in, loop_out;
     double hot_cues[8]; /* -1 = unset */
     float fader, peak;
+    int touched; /* hand on the platter (scratching) */
 } sbe_deck_status;
 
 typedef struct {
@@ -123,6 +124,15 @@ void sbe_deck_reloop(sbe_engine* e, int deck);
 void sbe_deck_loop_scale(sbe_engine* e, int deck, double factor);
 void sbe_deck_beat_jump(sbe_engine* e, int deck, double beats);
 void sbe_deck_set_tempo(sbe_engine* e, int deck, double ratio);
+/* Jog wheel / platter. One revolution = 1.8 s of audio (a 33⅓ rpm record).
+ * touch: 1 = hand on the record (it follows the hand), 0 = let go (the motor takes over).
+ * scratch: move the hand by signed revolutions while touched.
+ * bend: turn the jog edge (not touched): a temporary pitch bend that decays.
+ * motor_time: 0 = instant start/stop (CDJ); &gt; 0 = turntable spin-up and brake, in seconds. */
+void sbe_deck_jog_touch(sbe_engine* e, int deck, int touched);
+void sbe_deck_jog_scratch(sbe_engine* e, int deck, double revolutions);
+void sbe_deck_jog_bend(sbe_engine* e, int deck, double revolutions);
+void sbe_deck_set_motor_time(sbe_engine* e, int deck, double seconds);
 void sbe_deck_set_nudge(sbe_engine* e, int deck, double ratio);
 void sbe_deck_sync(sbe_engine* e, int deck, int lock);
 void sbe_deck_unsync(sbe_engine* e, int deck);
@@ -153,6 +163,9 @@ void sbe_transition_start_on_phrase(sbe_engine* e, int from_deck, int to_deck, d
                                     sbe_transition_style style, int phrase_beats);
 void sbe_transition_cancel(sbe_engine* e);
 void sbe_recording_set(sbe_engine* e, int on);
+/* Visualizers: copies the newest `frames` master samples (mono, post-limiter, oldest first) into
+ * `out`; returns how many were copied (at most 8192). Safe from any thread, never blocks audio. */
+int sbe_engine_read_visual(const sbe_engine* e, float* out, int frames);
 size_t sbe_recording_read(sbe_engine* e, float* interleaved_stereo, size_t max_frames);</code></pre>
 <h2 id="status">Status</h2>
 <pre><code class="language-c">void sbe_deck_get_status(const sbe_engine* e, int deck, sbe_deck_status* out);
@@ -170,7 +183,7 @@ void sbe_engine_collect_garbage(sbe_engine* e);</code></pre>
 <div class="footer-col"><h2>Project</h2><ul><li><a href="../../docs/project/roadmap.html">Roadmap</a></li><li><a href="../../docs/project/changelog.html">Changelog</a></li><li><a href="../../docs/project/security.html">Security</a></li><li><a href="../../docs/project/contributors.html">Contributors</a></li></ul></div>
 <div class="footer-col"><h2>Agents</h2><ul><li><a href="../../llm.txt">llm.txt</a></li><li><a href="../../docs/project/agents.html">AGENTS.md</a></li><li><a href="../../docs/project/status.html">Status</a></li></ul></div>
 </div>
-<p class="legal">© 2026 · Soundboard · 0.1.0 · All rights reserved</p>
+<p class="legal">© 2026 · Soundboard · 0.2.0 · All rights reserved</p>
 </div></footer>
 </body>
 </html>

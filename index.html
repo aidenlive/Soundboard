@@ -15,12 +15,12 @@
 <p class="eyebrow"><picture><source srcset="public/assets/mark-on-light.svg" media="(prefers-color-scheme: light)"><img class="mark" src="public/assets/mark.svg" alt=""></picture> Soundboard</p>
 <h1>Get Soundboard</h1>
 <p class="lead">A DJ app for iPhone, Android and Mac with a separate headphone cue, simple enough to mix two tracks in seconds and deep enough to play a full set.</p>
-<p class="meta">Version 0.1.0 · released 2026-11-05 · All rights reserved · requires macOS 14 and Xcode 15 for the apps, CMake 3.16 for the engine, Node 20 and Python 3 for the checks</p>
+<p class="meta">Version 0.2.0 · released 2026-11-06 · All rights reserved · requires macOS 14 and Xcode 15 for the apps, CMake 3.16 for the engine, Node 20 and Python 3 for the checks</p>
 <ol class="res-rows">
 <li class="res-row"><span class="res-n">01</span><div><h2>Run it</h2><p class="res-links"><a href="docs/guides/local-development.md">Local development</a><a href="public/docs/guides/local-development.html">Guide (site)</a><a href="docs/guides/dev-logins.md">Dev logins</a><a href="http://localhost:8052/">localhost:8052 (make up)</a></p></div></li>
 <li class="res-row"><span class="res-n">02</span><div><h2>Read the docs</h2><p class="res-links"><a href="public/docs/index.html">Docs</a><a href="public/llm.txt">llm.txt</a></p></div></li>
 <li class="res-row"><span class="res-n">03</span><div><h2>See it</h2><p class="res-links"><a href="public/index.html">Landing page</a><a href="public/design/index.html">Design kit</a><a href="public/system/index.html">System graph</a></p></div></li>
-<li class="res-row"><span class="res-n">04</span><div><h2>Get the source</h2><p class="res-links"><a href="README.md">README</a><a href="CHANGELOG.md">CHANGELOG</a><a href="AGENTS.md">AGENTS.md</a><a href="dist/soundboard-0.1.0.zip">dist/soundboard-0.1.0.zip (make dist)</a></p></div></li>
+<li class="res-row"><span class="res-n">04</span><div><h2>Get the source</h2><p class="res-links"><a href="README.md">README</a><a href="CHANGELOG.md">CHANGELOG</a><a href="AGENTS.md">AGENTS.md</a><a href="dist/soundboard-0.2.0.zip">dist/soundboard-0.2.0.zip (make dist)</a></p></div></li>
 </ol>
 <h2>Commands</h2>
 <pre><code>make setup        # check the toolchain; generate the Xcode project
@@ -29,7 +29,7 @@ make up           # serve the docs site in Docker at localhost:8052; make down s
 make validate     # every check, then the tests
 make e2e          # open every site page; check links, assets and anchors
 make site-serve   # serve public/ at localhost:8052 without Docker
-make dist         # dist/soundboard-0.1.0.zip and .sha256 from tracked files</code></pre>
+make dist         # dist/soundboard-0.2.0.zip and .sha256 from tracked files</code></pre>
 <h2>Connect an agent</h2>
 <p>Soundboard has no MCP server of its own. Give an agent the repository through a filesystem server and point it at <code>AGENTS.md</code> and <code>public/llm.txt</code>:</p>
 <pre><code>{
@@ -50,7 +50,7 @@ make validate</code></pre>
 </main>
 <footer class="site-footer"><div class="frame">
 <p class="res-links"><a href="public/index.html">Site</a><a href="public/docs/index.html">Docs</a><a href="public/llm.txt">llm.txt</a><a href="README.md">README</a></p>
-<p class="legal">© 2026 · Soundboard · 0.1.0 · All rights reserved</p>
+<p class="legal">© 2026 · Soundboard · 0.2.0 · All rights reserved</p>
 </div></footer>
 </body>
 </html>

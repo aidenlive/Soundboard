@@ -84,12 +84,15 @@ public final class VisualizerFeed {
     @ObservationIgnored private var users = 0
     @ObservationIgnored private var timer: Timer?
     @ObservationIgnored private let n = 2048
-    @ObservationIgnored private lazy var dft = vDSP.DFT(count: n, direction: .forward, transformType: .complexComplex, ofType: Float.self)
-    @ObservationIgnored private lazy var window = vDSP.window(ofType: Float.self, usingSequence: .hanningDenormalized, count: n, isHalfWindow: false)
+    @ObservationIgnored private let dft: vDSP.DFT<Float>?
+    @ObservationIgnored private let window: [Float]
     @ObservationIgnored private var samples: [Float] = []
     @ObservationIgnored private var smoothed: [Float] = Array(repeating: 0, count: 32)
 
-    public init() {}
+    public init() {
+        dft = vDSP.DFT(count: 2048, direction: .forward, transformType: .complexComplex, ofType: Float.self)
+        window = vDSP.window(ofType: Float.self, usingSequence: .hanningDenormalized, count: 2048, isHalfWindow: false)
+    }
 
     public func acquire() {
         users += 1
@@ -159,10 +162,12 @@ public final class VisualizerFeed {
 @Observable
 public final class VisualizerHub {
     public static let shared = VisualizerHub()
-    public let feed = VisualizerFeed()
+    public let feed: VisualizerFeed
     public private(set) var session: DJSession?
     /// An external display or AirPlay screen is showing the visualizer (iOS).
     public internal(set) var externalDisplayActive = false
+
+    private init() { feed = VisualizerFeed() }
 
     func attach(_ session: DJSession) {
         self.session = session
