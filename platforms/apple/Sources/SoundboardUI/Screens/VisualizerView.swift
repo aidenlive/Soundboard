@@ -59,6 +59,7 @@ struct VisualizerCanvas: View {
     }
 
     private func radial(_ ctx: GraphicsContext, _ size: CGSize, _ colors: [Color], _ kick: Double) {
+        guard !frame.bands.isEmpty else { return }
         let c = CGPoint(x: size.width / 2, y: size.height / 2)
         let r0 = min(size.width, size.height) * (0.22 + 0.03 * CGFloat(kick))
         let maxLen = min(size.width, size.height) * 0.24
@@ -95,6 +96,7 @@ struct VisualizerCanvas: View {
 
     /// The brand's Pulse: bars on an S-curve, the centre bar in the accent, driven by the music.
     private func pulse(_ ctx: GraphicsContext, _ size: CGSize, _ colors: [Color], _ kick: Double) {
+        guard !frame.bands.isEmpty else { return }
         let n = 15
         let s = min(size.width, size.height * 1.4) / 100
         let ox = (size.width - 100 * s) / 2, oy = (size.height - 100 * s) / 2
@@ -180,6 +182,9 @@ public struct VisualizerStage: View {
         .statusBarHidden(true)
         .persistentSystemOverlays(.hidden)
         .onAppear { UIApplication.shared.isIdleTimerDisabled = true }
+        .onDisappear {
+            UIApplication.shared.isIdleTimerDisabled = hub.session?.preferences.prefs.session.keepScreenOn ?? false
+        }
         #endif
     }
 
@@ -314,7 +319,6 @@ public final class ExternalDisplaySceneDelegate: UIResponder, UIWindowSceneDeleg
         guard let windowScene = scene as? UIWindowScene else { return }
         MainActor.assumeIsolated {
             let hub = VisualizerHub.shared
-            guard hub.session?.preferences.prefs.visualizer.useExternalDisplay ?? true else { return }
             let window = UIWindow(windowScene: windowScene)
             let root = VisualizerStage(hub: hub)
                 .environment(\.obsidian, ObsidianTheme(appearance: AppearanceStore().appearance, systemIsDark: true))
@@ -338,10 +342,16 @@ public final class ExternalDisplaySceneDelegate: UIResponder, UIWindowSceneDeleg
 public final class SoundboardAppDelegate: NSObject, UIApplicationDelegate {
     public func application(_ application: UIApplication, configurationForConnecting connectingSceneSession: UISceneSession,
                             options: UIScene.ConnectionOptions) -> UISceneConfiguration {
-        let config = UISceneConfiguration(name: nil, sessionRole: connectingSceneSession.role)
-        if connectingSceneSession.role == .windowExternalDisplayNonInteractive {
-            config.delegateClass = ExternalDisplaySceneDelegate.self
+        // Only the external display is ours; the app's own window stays SwiftUI's.
+        guard connectingSceneSession.role == .windowExternalDisplayNonInteractive else {
+            return connectingSceneSession.configuration
         }
+        let config = UISceneConfiguration(name: "Visualizer", sessionRole: connectingSceneSession.role)
+        // Setting off: no delegate, so iOS mirrors the app as usual.
+        let wanted = MainActor.assumeIsolated {
+            VisualizerHub.shared.session?.preferences.prefs.visualizer.useExternalDisplay ?? true
+        }
+        if wanted { config.delegateClass = ExternalDisplaySceneDelegate.self }
         return config
     }
 }

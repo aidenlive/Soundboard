@@ -48,6 +48,8 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.soundboard.app
         INFOPLIST_KEY_CFBundleDisplayName: Soundboard
+        # The Info.plist's UILaunchScreen (black) must not be replaced by a generated one.
+        INFOPLIST_KEY_UILaunchScreen_Generation: NO
   RoutingLab:
     type: application
     supportedDestinations: [iOS, macOS]

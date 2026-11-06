@@ -129,6 +129,7 @@ public final class Track: @unchecked Sendable {
             try Task.checkCancellation()
             guard let block = CMSampleBufferGetDataBuffer(sample) else { continue }
             let bytes = CMBlockBufferGetDataLength(block)
+            guard bytes >= MemoryLayout<Float>.size else { continue }
             let start = out.count
             out.append(contentsOf: repeatElement(0, count: bytes / MemoryLayout<Float>.size))
             _ = out.withUnsafeMutableBytes { raw in

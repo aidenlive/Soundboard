@@ -57,7 +57,8 @@ struct LaunchView: View {
             await animate(0.2) { markOpacity = 0 }
             stage = .loading
             await animate(0.2) { pulseOpacity = 1 }
-            while !isReady() { try? await Task.sleep(for: .milliseconds(50)) }
+            while !isReady() && !Task.isCancelled { try? await Task.sleep(for: .milliseconds(50)) }
+            if Task.isCancelled { return }
             // Let the pulse be seen, never flicker.
             try? await Task.sleep(for: .seconds(0.3))
         }

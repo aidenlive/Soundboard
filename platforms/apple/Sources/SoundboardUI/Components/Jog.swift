@@ -19,6 +19,8 @@ public struct JogWheel: View {
     @Environment(\.obsidian) private var t
     @State private var lastAngle: Double?
     @State private var mode: Mode?
+    /// Resets to false when the drag ends *or is cancelled* (onEnded is not called on cancel).
+    @GestureState private var dragging = false
 
     enum Mode { case scratch, bend }
 
@@ -44,6 +46,8 @@ public struct JogWheel: View {
                 .position(x: geo.size.width / 2, y: geo.size.height / 2)
         }
         .aspectRatio(1, contentMode: .fit)
+        .onChange(of: dragging) { _, now in if !now { release() } }
+        .onDisappear { release() }
         .opacity(deck.loaded ? 1 : 0.4)
         .allowsHitTesting(deck.loaded)
         .accessibilityElement()
@@ -100,6 +104,7 @@ public struct JogWheel: View {
 
     private func drag(center: CGPoint, radius: CGFloat) -> some Gesture {
         DragGesture(minimumDistance: 0, coordinateSpace: .local)
+            .updating($dragging) { _, state, _ in state = true }
             .onChanged { g in
                 let dx = g.location.x - center.x, dy = g.location.y - center.y
                 let distance = (dx * dx + dy * dy).squareRoot()
@@ -125,11 +130,14 @@ public struct JogWheel: View {
                 case nil: break
                 }
             }
-            .onEnded { _ in
-                if mode == .scratch { touch(false) }
-                mode = nil
-                lastAngle = nil
-            }
+            .onEnded { _ in release() }
+    }
+
+    /// Lets go of the record, whatever ended the touch.
+    private func release() {
+        if mode == .scratch { touch(false) }
+        mode = nil
+        lastAngle = nil
     }
 }
 
@@ -200,6 +208,7 @@ public struct NudgeButtons: View {
     let nudge: (Int) -> Void
     @Environment(\.obsidian) private var t
     @State private var held = 0
+    @GestureState private var pressing = false
 
     public init(nudge: @escaping (Int) -> Void) { self.nudge = nudge }
 
@@ -208,6 +217,12 @@ public struct NudgeButtons: View {
             button(-1, "minus", "Slow down")
             button(1, "plus", "Speed up")
         }
+        .onChange(of: pressing) { _, now in if !now { release() } }
+        .onDisappear { release() }
+    }
+
+    private func release() {
+        if held != 0 { held = 0; nudge(0) }
     }
 
     private func button(_ dir: Int, _ symbol: String, _ label: String) -> some View {
@@ -219,8 +234,9 @@ public struct NudgeButtons: View {
             .clipShape(RoundedRectangle(cornerRadius: t.radius))
             .overlay(RoundedRectangle(cornerRadius: t.radius).stroke(t.border, lineWidth: 1))
             .gesture(DragGesture(minimumDistance: 0)
+                .updating($pressing) { _, state, _ in state = true }
                 .onChanged { _ in if held != dir { held = dir; nudge(dir) } }
-                .onEnded { _ in held = 0; nudge(0) })
+                .onEnded { _ in release() })
             .accessibilityElement()
             .accessibilityLabel(label)
             .accessibilityAddTraits(.isButton)
