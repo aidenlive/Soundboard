@@ -100,6 +100,7 @@ public:
     void triggerHotCue(int deck, int index);
     void clearHotCue(int deck, int index);
     void setBeatLoop(int deck, double beats);
+    void setLoop(int deck, double inFrame, double outFrame, bool active);  // restore a saved loop
     void exitLoop(int deck);
     void reloop(int deck);
     void scaleLoop(int deck, double factor);

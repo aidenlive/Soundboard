@@ -14,8 +14,7 @@ minutes.
 
 ## 0.3.0 · Playable two-deck app on every platform (Levels 1–2)
 
-- Library persistence: content-hash identity, analysis cache, a bounded background analysis queue.
-- Session persistence; crash and interruption recovery.
+- Crash recovery beyond autosave (resume after a crash mid-set).
 - Android: MediaExtractor and MediaCodec decoding; Compose screens on the same tokens (Kotlin
   output from the token generator).
 - Measure SwiftUI `Canvas` waveform performance on device; move to Metal if it misses 120 Hz.

@@ -1,11 +1,12 @@
-import AVFAudio
+import AVFoundation
+import CoreMedia
 import Foundation
 import SoundboardEngine
 
 /// A decoded, analysed track ready to load on a deck. Wraps `sbe_track*`.
 ///
-/// Decoding uses AVAudioFile (MP3, AAC, ALAC, WAV, AIFF, FLAC). DRM-protected or streaming
-/// content is not file-decodable; streaming catalogues require a licensed partner SDK.
+/// Decoding: see `decode(url:)`. DRM-protected or streaming content is not file-decodable;
+/// streaming catalogues require a licensed partner SDK.
 public final class Track: @unchecked Sendable {
     public struct Analysis: Sendable, Equatable, Codable {
         public var bpm: Double
@@ -42,52 +43,113 @@ public final class Track: @unchecked Sendable {
 
     /// Decodes a file off the main thread.
     ///
-    /// Reads in fixed-size chunks until the file reports end of data. `AVAudioFile.length` is only
-    /// an estimate for some compressed files and is 0 for empty or truncated ones; a buffer sized
-    /// from it can have zero capacity, which makes `read(into:)` abort the process with an
-    /// assertion rather than throw.
+    /// Two decoders, tried in order:
+    ///  1. `AVAudioFile`: fast, and handles WAV, AIFF, CAF, MP3, AAC/ALAC in M4A, FLAC.
+    ///  2. `AVAssetReader`: anything AVFoundation plays, including M4A/MP4 files that AVAudioFile
+    ///     rejects (multiple tracks, video tracks, unusual atoms, HE-AAC) and files whose reported
+    ///     length is wrong.
+    /// DRM-protected files (Apple Music downloads, `.m4p`) cannot be decoded by any app and get
+    /// their own error. Both decoders read in chunks until end of data, because a buffer sized
+    /// from a reported length of 0 makes AVFoundation abort the process.
     public static func decode(url: URL) async throws -> Track {
         try await Task.detached(priority: .userInitiated) {
-            let file = try AVAudioFile(forReading: url, commonFormat: .pcmFormatFloat32, interleaved: false)
-            let format = file.processingFormat
-            let channels = Int(format.channelCount)
-            let outChannels = max(1, min(channels, 2))
-            guard channels > 0, format.sampleRate > 0 else { throw CocoaError(.fileReadCorruptFile) }
-
-            let chunk: AVAudioFrameCount = 1 << 16
-            guard let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: chunk) else {
-                throw CocoaError(.fileReadCorruptFile)
+            let pcm: (samples: [Float], channels: Int, rate: Double)
+            do {
+                pcm = try decodeWithAudioFile(url)
+            } catch {
+                pcm = try await decodeWithAssetReader(url, firstError: error)
             }
-            var interleaved: [Float] = []
-            interleaved.reserveCapacity(max(0, Int(file.length)) * outChannels)
-            while true {
-                try Task.checkCancellation()
-                do {
-                    try file.read(into: buffer, frameCount: chunk)
-                } catch {
-                    // A truncated file fails partway through: keep what decoded cleanly.
-                    if interleaved.isEmpty { throw error }
-                    break
-                }
-                let n = Int(buffer.frameLength)
-                if n == 0 { break }
-                guard let data = buffer.floatChannelData else { throw CocoaError(.fileReadCorruptFile) }
-                let start = interleaved.count
-                interleaved.append(contentsOf: repeatElement(0, count: n * outChannels))
-                interleaved.withUnsafeMutableBufferPointer { out in
-                    for c in 0..<outChannels {
-                        let src = data[c]
-                        for i in 0..<n { out[start + i * outChannels + c] = src[i] }
-                    }
-                }
-            }
-            // A file with no audio frames is not a track.
-            guard !interleaved.isEmpty,
-                  let track = Track(interleaved: interleaved, channels: outChannels, sampleRate: format.sampleRate) else {
-                throw CocoaError(.fileReadCorruptFile)
+            guard !pcm.samples.isEmpty,
+                  let track = Track(interleaved: pcm.samples, channels: pcm.channels, sampleRate: pcm.rate) else {
+                throw TrackDecodeError.noAudio
             }
             return track
         }.value
+    }
+
+    private static func decodeWithAudioFile(_ url: URL) throws -> (samples: [Float], channels: Int, rate: Double) {
+        let file = try AVAudioFile(forReading: url, commonFormat: .pcmFormatFloat32, interleaved: false)
+        let format = file.processingFormat
+        let channels = Int(format.channelCount)
+        guard channels > 0, format.sampleRate > 0 else { throw TrackDecodeError.noAudio }
+        let outChannels = min(channels, 2)
+        let chunk: AVAudioFrameCount = 1 << 16
+        guard let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: chunk) else { throw TrackDecodeError.noAudio }
+        var out: [Float] = []
+        out.reserveCapacity(max(0, Int(file.length)) * outChannels)
+        while true {
+            try Task.checkCancellation()
+            do {
+                try file.read(into: buffer, frameCount: chunk)
+            } catch {
+                if out.isEmpty { throw error }
+                break   // truncated file: keep what decoded cleanly
+            }
+            let n = Int(buffer.frameLength)
+            if n == 0 { break }
+            guard let data = buffer.floatChannelData else { throw TrackDecodeError.noAudio }
+            appendInterleaved(&out, n: n, channels: outChannels) { c, i in data[c][i] }
+        }
+        if out.isEmpty { throw TrackDecodeError.noAudio }
+        return (out, outChannels, format.sampleRate)
+    }
+
+    private static func decodeWithAssetReader(_ url: URL, firstError: Error) async throws -> (samples: [Float], channels: Int, rate: Double) {
+        let asset = AVURLAsset(url: url, options: [AVURLAssetPreferPreciseDurationAndTimingKey: true])
+        if (try? await asset.load(.hasProtectedContent)) == true { throw TrackDecodeError.protected }
+        guard let audio = try await asset.loadTracks(withMediaType: .audio).first else {
+            throw TrackDecodeError.unreadable(firstError.localizedDescription)
+        }
+        var rate = 44_100.0, sourceChannels = 2
+        if let desc = try await audio.load(.formatDescriptions).first,
+           let asbd = CMAudioFormatDescriptionGetStreamBasicDescription(desc)?.pointee {
+            if asbd.mSampleRate > 0 { rate = asbd.mSampleRate }
+            if asbd.mChannelsPerFrame > 0 { sourceChannels = Int(asbd.mChannelsPerFrame) }
+        }
+        let channels = min(sourceChannels, 2)
+        let settings: [String: Any] = [
+            AVFormatIDKey: kAudioFormatLinearPCM,
+            AVLinearPCMBitDepthKey: 32,
+            AVLinearPCMIsFloatKey: true,
+            AVLinearPCMIsBigEndianKey: false,
+            AVLinearPCMIsNonInterleaved: false,
+            AVSampleRateKey: rate,
+            AVNumberOfChannelsKey: channels,
+        ]
+        let reader = try AVAssetReader(asset: asset)
+        let output = AVAssetReaderTrackOutput(track: audio, outputSettings: settings)
+        output.alwaysCopiesSampleData = false
+        guard reader.canAdd(output) else { throw TrackDecodeError.unreadable(firstError.localizedDescription) }
+        reader.add(output)
+        guard reader.startReading() else {
+            throw TrackDecodeError.unreadable(reader.error?.localizedDescription ?? firstError.localizedDescription)
+        }
+        var out: [Float] = []
+        while let sample = output.copyNextSampleBuffer() {
+            try Task.checkCancellation()
+            guard let block = CMSampleBufferGetDataBuffer(sample) else { continue }
+            let bytes = CMBlockBufferGetDataLength(block)
+            let start = out.count
+            out.append(contentsOf: repeatElement(0, count: bytes / MemoryLayout<Float>.size))
+            _ = out.withUnsafeMutableBytes { raw in
+                CMBlockBufferCopyDataBytes(block, atOffset: 0, dataLength: bytes, destination: raw.baseAddress! + start * MemoryLayout<Float>.size)
+            }
+        }
+        if reader.status == .failed, out.isEmpty {
+            throw TrackDecodeError.unreadable(reader.error?.localizedDescription ?? firstError.localizedDescription)
+        }
+        if out.isEmpty { throw TrackDecodeError.noAudio }
+        return (out, channels, rate)
+    }
+
+    private static func appendInterleaved(_ out: inout [Float], n: Int, channels: Int, _ sample: (Int, Int) -> Float) {
+        let start = out.count
+        out.append(contentsOf: repeatElement(0, count: n * channels))
+        out.withUnsafeMutableBufferPointer { buf in
+            for c in 0..<channels {
+                for i in 0..<n { buf[start + i * channels + c] = sample(c, i) }
+            }
+        }
     }
 
     /// Tempo/beat grid, key and loudness. Slow (≈ 0.1–0.5 s per minute of audio): call off the main thread.
@@ -126,5 +188,20 @@ public extension EngineHost {
     func preview(_ track: Track, from frame: Double = 0) {
         sbe_preview_load(engine, track.handle, frame)
         sbe_preview_play(engine)
+    }
+}
+
+/// Why a file could not become a track, in words a DJ can act on.
+public enum TrackDecodeError: LocalizedError, Equatable {
+    case protected
+    case noAudio
+    case unreadable(String)
+
+    public var errorDescription: String? {
+        switch self {
+        case .protected: "This file is copy-protected (an Apple Music download or .m4p). Only DRM-free files can be mixed."
+        case .noAudio: "This file contains no audio."
+        case .unreadable(let why): "This file can't be decoded: \(why)"
+        }
     }
 }

@@ -205,6 +205,20 @@ TEST(cdj_cue_semantics) {
     CHECK_NEAR(e.deckStatus(0).position, kSR * 4.0, 1.0);
 }
 
+TEST(saved_loop_restores_inactive_then_reloops) {
+    Engine e(kSR, kBlock);
+    e.loadTrack(0, withGrid(synth::makeSine(200, 30, kSR), 120.0, 0.0));
+    Capture cap(2);
+    e.setLoop(0, kSR * 2.0, kSR * 3.0, false); run(e, cap, 0.02);
+    CHECK(!e.deckStatus(0).loopActive);
+    CHECK_NEAR(e.deckStatus(0).loopIn, kSR * 2.0, 0.5);
+    CHECK_NEAR(e.deckStatus(0).loopOut, kSR * 3.0, 0.5);
+    e.seek(0, kSR * 2.5); e.reloop(0); e.play(0); run(e, cap, 1.5);   // longer than the loop
+    CHECK(e.deckStatus(0).loopActive);
+    const double pos = e.deckStatus(0).position;
+    CHECK(pos >= kSR * 2.0 && pos < kSR * 3.0);
+}
+
 // ---- Routing: the core problem -----------------------------------------------------------
 TEST(cue_never_leaks_into_master_multichannel) {
     Engine e(kSR, kBlock);

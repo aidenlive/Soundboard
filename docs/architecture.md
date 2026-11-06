@@ -127,10 +127,19 @@ There is no HTTP API, SDK, CLI or MCP server in 0.1.0.
 
 ## Data model
 
-The session model above is the target schema. In 0.1.0 the library lives in memory: each imported
-file is a `LibraryTrack` with a security-scoped bookmark, its decoded `Track` and its `Analysis`
-(BPM, first beat, key, Camelot code, loudness, auto-gain). Persistence is version 0.3.0 in
-[ROADMAP.md](../ROADMAP.md).
+Everything is JSON in `Application Support/Soundboard/` (format and rules in
+[ADR 0007](decisions/0007-library-and-sessions.md)):
+
+| File | Holds | Shared by |
+|---|---|---|
+| `library.json` | Tracks (title, artist, duration, location, content hash, analysis, 8 hot cues, saved loop) and playlists | Every session |
+| `sessions/index.json` | Named sessions and the last one opened | — |
+| `sessions/<id>.json` | Decks (track, position, tempo, sync, loop, cue, channel strip), master and headphone mixer, queue, library view | One session |
+| `media/<id>.<ext>` | Audio copied in at import (always on iOS, optional on macOS) | Library |
+
+Preferences and Appearance are small JSON values in `UserDefaults`. PCM and waveforms are never
+stored: a track is decoded when it loads and its waveform drawn from that decode. The session
+model above is the target for the sync service; the files are its first, local form.
 
 ## Surfaces
 

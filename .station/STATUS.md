@@ -37,5 +37,6 @@ Version 0.1.0 · draft · 2026-11-05
 | [005 ios decode fix](jobs/005-ios-decode-fix/SESSION.md) | DONE |
 | [006 station adoption](jobs/006-station-adoption/SESSION.md) | DONE |
 | [007 hardware validation](jobs/007-hardware-validation/SESSION.md) | PLANNED |
-| [008 library persistence](jobs/008-library-persistence/SESSION.md) | PLANNED |
+| [008 library persistence](jobs/008-library-persistence/SESSION.md) | DONE |
 | [009 android app](jobs/009-android-app/SESSION.md) | PLANNED |
+| [010 refinement stage 1](jobs/010-refinement-stage-1/SESSION.md) | ACTIVE |

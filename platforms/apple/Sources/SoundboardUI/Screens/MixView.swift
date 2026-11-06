@@ -13,9 +13,11 @@ struct MixView: View {
         HStack(alignment: .top, spacing: t.gap) {
             DeckColumn(session: session, index: 0, roomy: roomy)
             VStack(spacing: 6) {
-                HStack {
-                    RouteChip(session: session)
-                    Spacer()
+                HStack(spacing: 4) {
+                    RouteChip(session: session).layoutPriority(1)
+                    Spacer(minLength: 8)
+                    SessionChip(session: session)
+                    MixerMenu(session: session)
                     Button { actions.openLibrary() } label: { Image(systemName: "list.bullet") }
                         .buttonStyle(.plain).foregroundStyle(t.textSecondary).frame(width: 44, height: 32)
                         .accessibilityLabel("Library")
@@ -80,10 +82,11 @@ struct DeckColumn: View {
     var body: some View {
         let d = session.decks[index]
         VStack(alignment: .leading, spacing: 8) {
-            HStack {
+            HStack(spacing: 4) {
                 Text("DECK \(d.letter)")
-                Spacer()
+                Spacer(minLength: 2)
                 Text(d.syncLocked ? "SYNC ●" : "SYNC ○").foregroundStyle(d.syncLocked ? t.primary : t.textMuted)
+                DeckMenu(session: session, index: index)
             }
             .font(t.mono(10, .medium)).tracking(1).foregroundStyle(t.textMuted)
             Text(d.loaded ? d.title : "Empty").font(t.ui(13, .semibold)).lineLimit(2).foregroundStyle(t.text)
@@ -97,6 +100,13 @@ struct DeckColumn: View {
                 Fader("Channel \(d.letter) volume", value: Binding(get: { d.fader }, set: { session.set(.fader, deck: index, $0) }), in: 0...1)
             }
             Spacer(minLength: 0)
+            transport(d)
+        }
+        .frame(width: roomy ? 220 : 120)
+    }
+
+    @ViewBuilder private func transport(_ d: DeckState) -> some View {
+        VStack(spacing: 6) {
             HStack(spacing: 6) {
                 Button { session.togglePlay(index) } label: { Image(systemName: d.playing ? "pause.fill" : "play.fill").frame(maxWidth: .infinity) }
                     .buttonStyle(ObsidianButtonStyle(prominent: d.playing))
@@ -115,7 +125,6 @@ struct DeckColumn: View {
                 .accessibilityValue(d.cueEnabled ? "on" : "off")
             }
         }
-        .frame(width: roomy ? 220 : 120)
         .disabled(!d.loaded)
     }
 }

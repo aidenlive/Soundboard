@@ -81,6 +81,7 @@ void sbe_deck_hot_cue_set(sbe_engine* e, int d, int i, double f) { e->engine.set
 void sbe_deck_hot_cue_trigger(sbe_engine* e, int d, int i) { e->engine.triggerHotCue(d, i); }
 void sbe_deck_hot_cue_clear(sbe_engine* e, int d, int i) { e->engine.clearHotCue(d, i); }
 void sbe_deck_beat_loop(sbe_engine* e, int d, double b) { e->engine.setBeatLoop(d, b); }
+void sbe_deck_set_loop(sbe_engine* e, int d, double in, double out, int active) { e->engine.setLoop(d, in, out, active != 0); }
 void sbe_deck_loop_exit(sbe_engine* e, int d) { e->engine.exitLoop(d); }
 void sbe_deck_reloop(sbe_engine* e, int d) { e->engine.reloop(d); }
 void sbe_deck_loop_scale(sbe_engine* e, int d, double f) { e->engine.scaleLoop(d, f); }

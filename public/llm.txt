@@ -33,6 +33,7 @@ Paths are relative to this file.
 - docs/decisions/0004-split-mark.html
 - docs/decisions/0005-station-layout.html
 - docs/decisions/0006-phrase-quantised-transitions.html
+- docs/decisions/0007-library-and-sessions.html
 - docs/project/agents.html
 - docs/project/status.html
 - docs/project/roadmap.html

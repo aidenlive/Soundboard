@@ -7,7 +7,7 @@ namespace sbe {
 
 enum class Engine::Op : uint8_t {
     Layout, Latency, Load, Play, Pause, Toggle, Seek, CuePress, CueRelease, HotSet, HotTrigger,
-    HotClear, BeatLoop, ExitLoop, Reloop, ScaleLoop, BeatJump, Tempo, Nudge, Sync, Unsync, Quantize,
+    HotClear, BeatLoop, SetLoop, ExitLoop, Reloop, ScaleLoop, BeatJump, Tempo, Nudge, Sync, Unsync, Quantize,
     Trim, Eq, Filter, Fader, CueEnable, XfAssignOp, Echo, AutoGain, Crossfader, XfCurve, MasterGain,
     Ceiling, HpGain, CueMix, PreviewLoad, PreviewPlay, PreviewStop, PreviewGain, TransitionStart,
     TransitionCancel, Record
@@ -166,6 +166,9 @@ void Engine::setHotCue(int d, int i, double f) { SBE_SEND(c.op = Op::HotSet; c.d
 void Engine::triggerHotCue(int d, int i) { SBE_SEND(c.op = Op::HotTrigger; c.deck = d; c.i = i); }
 void Engine::clearHotCue(int d, int i) { SBE_SEND(c.op = Op::HotClear; c.deck = d; c.i = i); }
 void Engine::setBeatLoop(int d, double b) { SBE_SEND(c.op = Op::BeatLoop; c.deck = d; c.a = b); }
+void Engine::setLoop(int d, double in, double out, bool active) {
+    SBE_SEND(c.op = Op::SetLoop; c.deck = d; c.a = in; c.b = out; c.i = active ? 1 : 0);
+}
 void Engine::exitLoop(int d) { SBE_SEND(c.op = Op::ExitLoop; c.deck = d); }
 void Engine::reloop(int d) { SBE_SEND(c.op = Op::Reloop; c.deck = d); }
 void Engine::scaleLoop(int d, double f) { SBE_SEND(c.op = Op::ScaleLoop; c.deck = d; c.a = f); }
@@ -297,6 +300,9 @@ void Engine::applyCommand(const Command& c) {
         case Op::HotTrigger: if (dk) dk->triggerHotCue(c.i, quantize_); break;
         case Op::HotClear: if (dk) dk->clearHotCue(c.i); break;
         case Op::BeatLoop: if (dk) dk->setBeatLoop(c.a, quantize_); break;
+        case Op::SetLoop:
+            if (dk) { dk->setLoop(c.a, c.b); if (!c.i) dk->exitLoop(); }
+            break;
         case Op::ExitLoop: if (dk) dk->exitLoop(); break;
         case Op::Reloop: if (dk) dk->reloop(); break;
         case Op::ScaleLoop: if (dk) dk->scaleLoop(c.a); break;

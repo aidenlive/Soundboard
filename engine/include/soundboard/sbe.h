@@ -107,6 +107,8 @@ void sbe_deck_hot_cue_set(sbe_engine* e, int deck, int index, double frame);
 void sbe_deck_hot_cue_trigger(sbe_engine* e, int deck, int index);
 void sbe_deck_hot_cue_clear(sbe_engine* e, int deck, int index);
 void sbe_deck_beat_loop(sbe_engine* e, int deck, double beats);
+/* Restores a saved loop: in/out in track frames; active 0 keeps it stored but not looping (reloop starts it). */
+void sbe_deck_set_loop(sbe_engine* e, int deck, double in_frame, double out_frame, int active);
 void sbe_deck_loop_exit(sbe_engine* e, int deck);
 void sbe_deck_reloop(sbe_engine* e, int deck);
 void sbe_deck_loop_scale(sbe_engine* e, int deck, double factor);

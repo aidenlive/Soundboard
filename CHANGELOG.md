@@ -2,6 +2,29 @@
 
 Versions follow semver. The top entry matches `version` in `station.json` and the latest git tag.
 
+## Unreleased
+
+### Added
+
+- Saved sessions: named sessions with decks, mixer, queue and library view. They save
+  automatically, and the last one reopens at launch with decks paused
+  ([ADR 0007](docs/decisions/0007-library-and-sessions.md)).
+- Persistent library with playlists and a per-session queue. Cue points and the saved loop are
+  kept with each track.
+- Removing tracks from decks (eject), from the queue, from playlists and from the library, with
+  selection mode for several at once.
+- Reset controls for the mixer, the audio configuration and all settings.
+- Settings pages: Audio & routing (output pickers, monitoring, buffer size, master ceiling),
+  Mixing, Controllers, Library, Sessions, Reset and About. Platform-only settings are badged.
+- Engine: `sbe_deck_set_loop` restores a saved loop.
+
+### Fixed
+
+- M4A and other files that failed to import or play. Files are copied in under file
+  coordination, which also downloads iCloud files. Decoding falls back to AVAssetReader.
+  Copy-protected files get a clear message.
+- Decks survive an iOS audio-server restart.
+
 ## 0.1.0 · 2026-11-05
 
 First tagged version. Audio foundation complete; the Apple app plays two decks on the real engine.

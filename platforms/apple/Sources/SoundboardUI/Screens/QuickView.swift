@@ -41,14 +41,17 @@ struct QuickView: View {
     }
 
     private var header: some View {
-        HStack {
-            RouteChip(session: session)
-            Spacer()
-            Button { actions.openSettings() } label: {
-                Image(systemName: "slider.horizontal.3").foregroundStyle(t.textSecondary).frame(width: 44, height: 44)
+        VStack(alignment: .leading, spacing: 2) {
+            HStack(spacing: 8) {
+                SessionChip(session: session)
+                Spacer(minLength: 8)
+                Button { actions.openSettings() } label: {
+                    Image(systemName: "slider.horizontal.3").foregroundStyle(t.textSecondary).frame(width: 44, height: 44)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Settings")
             }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Settings")
+            RouteChip(session: session)
         }
         .padding(.horizontal, t.pad)
     }
@@ -65,10 +68,11 @@ struct QuickView: View {
     private func trackInfo(_ d: DeckState) -> some View {
         HStack(alignment: .lastTextBaseline) {
             VStack(alignment: .leading, spacing: 2) {
-                Text(d.title).font(t.ui(20, .semibold)).lineLimit(1)
+                Text(d.title).font(t.ui(20, .semibold)).lineLimit(1).truncationMode(.tail)
                 Text(d.artist.isEmpty ? " " : d.artist).font(t.ui(13)).foregroundStyle(t.textMuted).lineLimit(1)
             }
-            Spacer()
+            .frame(maxWidth: .infinity, alignment: .leading)
+            DeckMenu(session: session, index: d.index)
             VStack(alignment: .trailing, spacing: 4) {
                 Text(Format.bpm(d.effectiveBpm)).font(t.mono(34, .medium)).tracking(-1)
                 Text("\(d.camelot.isEmpty ? "—" : d.camelot) · −\(Format.time(d.remaining))").font(t.mono(11)).foregroundStyle(t.textMuted)
