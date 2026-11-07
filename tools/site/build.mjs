@@ -13,6 +13,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { render, escapeHtml as esc } from "./md.mjs";
+import { phoneQuick, macDJ, tvVisualizer } from "./showcase.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const read = (p) => fs.readFileSync(path.join(ROOT, p), "utf8");
@@ -411,6 +412,12 @@ outputs.set("public/index.html", fillRegions(landingSrc, "public/index.html", {
   footer: footer("index.html"),
   version: `<p class="meta">Version ${VERSION} · ${RELEASED} · ${manifest.status} · internal</p>`,
   figure: routingFigure(),
+  showcase: `<figure class="devices" data-theme="oled">
+<div class="device device-mac">${macDJ()}</div>
+<div class="device device-phone">${phoneQuick()}</div>
+<figcaption>The DJ layout on a Mac and the Quick view on iPhone, drawn from the app's layout and design tokens. Screenshots from the running app will replace these.</figcaption>
+</figure>`,
+  "showcase-tv": `<figure class="device device-tv" data-theme="oled">${tvVisualizer()}</figure>`,
 }));
 
 // --------------------------------------------------------------------------- root resource page

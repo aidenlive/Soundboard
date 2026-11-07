@@ -27,6 +27,9 @@ colors:
   mark-cue: "oklch(0.880 0.210 128)"
   pulse: "oklch(0.880 0.210 128)"
   pulse-rest: "oklch(0.640 0.006 260)"
+  wave-low: "oklch(0.660 0.160 238)"
+  wave-mid: "oklch(0.789 0.162 55)"
+  wave-high: "oklch(0.975 0.006 260)"
 typography:
   display:
     fontFamily: "Geist"
@@ -136,6 +139,9 @@ themes:
     mark-cue: "oklch(0.880 0.210 128)"
     pulse: "oklch(0.880 0.210 128)"
     pulse-rest: "oklch(0.640 0.006 260)"
+    wave-low: "oklch(0.660 0.160 238)"
+    wave-mid: "oklch(0.789 0.162 55)"
+    wave-high: "oklch(0.975 0.006 260)"
   graphite:
     success: "oklch(0.660 0.180 150)"
     warning: "oklch(0.780 0.170 75)"
@@ -161,6 +167,9 @@ themes:
     mark-cue: "oklch(0.880 0.210 128)"
     pulse: "oklch(0.880 0.210 128)"
     pulse-rest: "oklch(0.760 0.006 260)"
+    wave-low: "oklch(0.660 0.160 238)"
+    wave-mid: "oklch(0.789 0.162 55)"
+    wave-high: "oklch(0.975 0.006 260)"
   daylight:
     success: "oklch(0.660 0.180 150)"
     warning: "oklch(0.780 0.170 75)"
@@ -186,6 +195,9 @@ themes:
     mark-cue: "oklch(0.880 0.210 128)"
     pulse: "oklch(0.880 0.210 128)"
     pulse-rest: "oklch(0.530 0.006 260)"
+    wave-low: "oklch(0.660 0.160 238)"
+    wave-mid: "oklch(0.789 0.162 55)"
+    wave-high: "oklch(0.175 0.006 260)"
 ```
 
 Accents change `primary`, its hover and active states, and the accent waveform scheme. They never

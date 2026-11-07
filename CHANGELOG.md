@@ -2,6 +2,20 @@
 
 Versions follow semver. The top entry matches `version` in `station.json` and the latest git tag.
 
+## 0.2.1 · 2026-11-07
+
+### Fixed
+
+- Swift build: `DJSession()` and `VisualizerStage()` no longer build their main-actor
+  dependencies in default arguments (an error in Xcode 15's Swift 5 mode); each has a
+  no-argument initializer instead.
+
+### Changed
+
+- The landing page shows the apps: the DJ layout on a Mac and the Quick view on iPhone, plus
+  the visualizer on a second screen. They are drawn from the app's layout and design tokens, and
+  screenshots will replace them once the app is built. A new section explains the three ways to play.
+
 ## 0.2.0 · 2026-11-06
 
 The owner's refinement brief, all seven areas, on iPhone and Mac (Android follows on the same

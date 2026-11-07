@@ -160,9 +160,13 @@ public struct VisualizerStage: View {
     @State private var hideTask: Task<Void, Never>?
     @Environment(\.obsidian) private var t
 
-    public init(hub: VisualizerHub = .shared, onClose: (() -> Void)? = nil) {
+    public init(hub: VisualizerHub, onClose: (() -> Void)? = nil) {
         self.hub = hub
         self.onClose = onClose
+    }
+
+    public init(onClose: (() -> Void)? = nil) {
+        self.init(hub: .shared, onClose: onClose)
     }
 
     public var body: some View {

@@ -12,8 +12,8 @@ android {
         applicationId = "com.soundboard.routinglab"
         minSdk = 28 // AAudio honours an explicit output device from API 28
         targetSdk = 35
-        versionCode = 2
-        versionName = "0.2.0"
+        versionCode = 3
+        versionName = "0.2.1"
         externalNativeBuild {
             cmake {
                 cppFlags += "-std=c++17"
