@@ -196,6 +196,8 @@
   --layout-toc: 200px;
   --layout-hero-mark: 260px;
   --layout-mark: 24px;
+  --layout-device-phone: 300px;
+  --layout-device-mac: 860px;
 }
 
 :root {
@@ -224,6 +226,9 @@
   --color-mark-cue: oklch(0.880 0.210 128);
   --color-pulse: oklch(0.880 0.210 128);
   --color-pulse-rest: oklch(0.640 0.006 260);
+  --color-wave-low: oklch(0.660 0.160 238);
+  --color-wave-mid: oklch(0.789 0.162 55);
+  --color-wave-high: oklch(0.975 0.006 260);
 }
 
 @media (prefers-color-scheme: light) {
@@ -253,6 +258,9 @@
     --color-mark-cue: oklch(0.880 0.210 128);
     --color-pulse: oklch(0.880 0.210 128);
     --color-pulse-rest: oklch(0.530 0.006 260);
+    --color-wave-low: oklch(0.660 0.160 238);
+    --color-wave-mid: oklch(0.789 0.162 55);
+    --color-wave-high: oklch(0.175 0.006 260);
 }
 }
 
@@ -282,6 +290,9 @@
   --color-mark-cue: oklch(0.880 0.210 128);
   --color-pulse: oklch(0.880 0.210 128);
   --color-pulse-rest: oklch(0.640 0.006 260);
+  --color-wave-low: oklch(0.660 0.160 238);
+  --color-wave-mid: oklch(0.789 0.162 55);
+  --color-wave-high: oklch(0.975 0.006 260);
 }
 
 :root[data-theme="graphite"], [data-theme="graphite"] {
@@ -310,6 +321,9 @@
   --color-mark-cue: oklch(0.880 0.210 128);
   --color-pulse: oklch(0.880 0.210 128);
   --color-pulse-rest: oklch(0.760 0.006 260);
+  --color-wave-low: oklch(0.660 0.160 238);
+  --color-wave-mid: oklch(0.789 0.162 55);
+  --color-wave-high: oklch(0.975 0.006 260);
 }
 
 :root[data-theme="daylight"], [data-theme="daylight"] {
@@ -338,4 +352,7 @@
   --color-mark-cue: oklch(0.880 0.210 128);
   --color-pulse: oklch(0.880 0.210 128);
   --color-pulse-rest: oklch(0.530 0.006 260);
+  --color-wave-low: oklch(0.660 0.160 238);
+  --color-wave-mid: oklch(0.789 0.162 55);
+  --color-wave-high: oklch(0.175 0.006 260);
 }

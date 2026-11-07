@@ -124,8 +124,12 @@ public final class DJSession {
     @ObservationIgnored private let audioSession = AudioSessionController()
     #endif
 
-    public init(library: LibraryStore = LibraryStore(), sessions: SessionStore = SessionStore(),
-                preferences: PreferencesStore = PreferencesStore()) {
+    /// Default arguments are evaluated outside the main actor, so the stores are made here instead.
+    public convenience init() {
+        self.init(library: LibraryStore(), sessions: SessionStore(), preferences: PreferencesStore())
+    }
+
+    public init(library: LibraryStore, sessions: SessionStore, preferences: PreferencesStore) {
         self.library = library
         self.sessions = sessions
         self.preferences = preferences

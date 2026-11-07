@@ -4,7 +4,10 @@
     "color-mark-master": "{color-text}",
     "color-mark-cue": "{lime.500}",
     "color-pulse": "{lime.500}",
-    "color-pulse-rest": "{color-text-muted}"
+    "color-pulse-rest": "{color-text-muted}",
+    "color-wave-low": "{sky.500}",
+    "color-wave-mid": "{orange.400}",
+    "color-wave-high": "{wave-high-base}"
   },
   "layout": {
     "frame-max": 1200,
@@ -12,6 +15,8 @@
     "sidebar": 232,
     "toc": 200,
     "hero-mark": 260,
-    "mark": 24
+    "mark": 24,
+    "device-phone": 300,
+    "device-mac": 860
   }
 }

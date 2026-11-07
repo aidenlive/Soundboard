@@ -1,6 +1,6 @@
 # Status
 
-Version 0.2.0 · draft · 2026-11-06
+Version 0.2.1 · draft · 2026-11-07
 
 ## What passes
 
@@ -19,8 +19,8 @@ Version 0.2.0 · draft · 2026-11-06
 
 | Item | Owner | Note |
 |---|---|---|
-| Build and run 0.2.0 | aidenlive | All Swift since PR #6 is uncompiled; paste Xcode errors |
-| Tag v0.2.0 | aidenlive | This workspace cannot create tags: `git tag -a v0.2.0 -m "Soundboard 0.2.0" && git push origin v0.2.0` |
+| Build and run 0.2.1 | aidenlive | All Swift since PR #6 is uncompiled; paste Xcode errors |
+| Tag v0.2.1 | aidenlive | This workspace cannot create tags: `git tag -a v0.2.1 -m "Soundboard 0.2.1" && git push origin v0.2.1` |
 | On-device validation matrix | aidenlive | Job 007; needs the devices in docs/guides/qa.md |
 | GitHub Actions billing | aidenlive | Until fixed, `make validate` is run by hand before merge |
 | Name and trademark clearance | aidenlive | "Soundboard" is a working name |
